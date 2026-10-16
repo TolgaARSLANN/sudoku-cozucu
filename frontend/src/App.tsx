@@ -1,0 +1,149 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ApiError, solveBoard, solveImage } from "./api";
+import { Hero } from "./components/Hero";
+import { DropOverlay, Footer, TopBar } from "./components/Layout";
+import { ResultView, type ResultData } from "./components/ResultView";
+import { LoadingSkeleton, StatusBanner, type Status } from "./components/StatusBanner";
+
+type View = "hero" | "loading" | "result";
+
+const errorText = (e: unknown) => (e instanceof ApiError ? e.message : "Beklenmeyen bir hata oluştu, tekrar dener misin?");
+
+export default function App() {
+  const [view, setView] = useState<View>("hero");
+  const [status, setStatus] = useState<Status | null>(null);
+  const [result, setResult] = useState<ResultData | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const busyRef = useRef(false);  // pencere dinleyicilerinden de güncel değer okunabilsin
+  const fileInput = useRef<HTMLInputElement>(null);
+  const resultCount = useRef(0);
+
+  // Aynı anda tek istek: sürerken yeni yükleme ve tekrar tıklama yok sayılır
+  const startBusy = (on: boolean) => {
+    busyRef.current = on;
+    setBusy(on);
+  };
+
+  const handleFile = useCallback(async (file: File | null | undefined) => {
+    if (busyRef.current) return;
+    if (!file || !file.type.startsWith("image/")) {
+      setStatus({ kind: "hata", text: "Bu bir görsel dosyası değil. JPG, PNG ya da WEBP bir görsel seç." });
+      return;
+    }
+    startBusy(true);
+    setStatus({ kind: "bekle", text: "Izgara aranıyor, rakamlar okunuyor…" });
+    setView("loading");
+    window.scrollTo({ top: 0 });
+    try {
+      const data = await solveImage(file);
+      setStatus({ kind: data.durum, text: data.mesaj });
+      setResult({
+        id: ++resultCount.current,
+        image: data.gorsel,
+        board: data.tahta,
+        solution: data.cozum,
+        corrected: data.duzeltilen,
+        unsure: data.emin_degil,
+      });
+      setView("result");
+    } catch (e) {
+      setStatus({ kind: "hata", text: errorText(e) });
+      setView("hero");
+    } finally {
+      startBusy(false);
+    }
+  }, []);
+
+  const handleFix = useCallback(async (board: number[]) => {
+    if (busyRef.current) return;
+    startBusy(true);
+    setStatus({ kind: "bekle", text: "Çözülüyor…" });
+    try {
+      const data = await solveBoard(board);
+      setStatus({ kind: data.durum, text: data.mesaj });
+      if (data.cozum) {
+        setResult(r => r && { ...r, board, solution: data.cozum, corrected: [], unsure: [] });
+      }
+    } catch (e) {
+      setStatus({ kind: "hata", text: errorText(e) });
+    } finally {
+      startBusy(false);
+    }
+  }, []);
+
+  const openPicker = () => fileInput.current?.click();
+
+  // Ekran görüntüsü Ctrl+V ile yapıştırılabilir
+  useEffect(() => {
+    const onPaste = (e: ClipboardEvent) => {
+      const item = [...(e.clipboardData?.items ?? [])].find(i => i.type.startsWith("image/"));
+      if (item) handleFile(item.getAsFile());
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [handleFile]);
+
+  // Görsel pencerenin herhangi bir yerine bırakılabilir
+  useEffect(() => {
+    let depth = 0;  // iç içe öğelerde dragenter/dragleave çiftlerini saymak için
+    const hasFiles = (e: DragEvent) => [...(e.dataTransfer?.types ?? [])].includes("Files");
+    const onEnter = (e: DragEvent) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      depth++;
+      setDragging(true);
+    };
+    const onOver = (e: DragEvent) => { if (hasFiles(e)) e.preventDefault(); };
+    const onLeave = () => {
+      depth = Math.max(0, depth - 1);
+      if (depth === 0) setDragging(false);
+    };
+    const onDrop = (e: DragEvent) => {
+      e.preventDefault();
+      depth = 0;
+      setDragging(false);
+      handleFile(e.dataTransfer?.files[0]);
+    };
+    window.addEventListener("dragenter", onEnter);
+    window.addEventListener("dragover", onOver);
+    window.addEventListener("dragleave", onLeave);
+    window.addEventListener("drop", onDrop);
+    return () => {
+      window.removeEventListener("dragenter", onEnter);
+      window.removeEventListener("dragover", onOver);
+      window.removeEventListener("dragleave", onLeave);
+      window.removeEventListener("drop", onDrop);
+    };
+  }, [handleFile]);
+
+  return (
+    <>
+      <a className="skip" href="#main">İçeriğe geç</a>
+      <TopBar />
+      <main id="main" tabIndex={-1}>
+        <div className="wrap">
+          <StatusBanner status={status} />
+          {view === "hero" && <Hero onPick={openPicker} busy={busy} />}
+          {view === "loading" && <LoadingSkeleton />}
+          {view === "result" && result && (
+            <ResultView result={result} busy={busy} onNewImage={openPicker} onFix={handleFix} />
+          )}
+        </div>
+      </main>
+      <Footer />
+      <input
+        id="file"
+        ref={fileInput}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={e => {
+          handleFile(e.target.files?.[0]);
+          e.target.value = "";  // aynı dosya tekrar seçilebilsin
+        }}
+      />
+      {dragging && <DropOverlay />}
+    </>
+  );
+}
