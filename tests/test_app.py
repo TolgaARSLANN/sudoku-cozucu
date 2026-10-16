@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+import app as server
 from app import app
 
 IMAGES = Path(__file__).parent / "images"
@@ -66,6 +67,14 @@ def test_corrected_board_with_conflict(client):
 
 def test_invalid_board(client):
     assert client.post("/api/coz-tahta", json={"tahta": [1, 2, 3]}).status_code == 400
+
+
+def test_rejects_too_many_pixels(client, monkeypatch):
+    # Sınırı küçültüp normal bir görselle denenir; gerçek 50 MP'lik görsel üretmek testi yavaşlatırdı
+    monkeypatch.setattr(server, "MAX_PIXELS", 1000)
+    res = post(client, (IMAGES / "ekran_1.jpg").read_bytes())
+    assert res.status_code == 413
+    assert "çözünürlüğü çok yüksek" in res.get_json()["hata"]
 
 
 def test_missing_file(client):

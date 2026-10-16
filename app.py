@@ -3,10 +3,12 @@
     python app.py      →  http://127.0.0.1:5000
 """
 import base64
+from io import BytesIO
 
 import cv2
 import numpy as np
 from flask import Flask, jsonify, request, send_from_directory
+from PIL import Image
 
 from digits import DigitClassifier
 from solver import solve, solve_unique
@@ -15,6 +17,22 @@ from vision import MESSAGES, solve_image
 app = Flask(__name__, static_folder="static")
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024
 clf = DigitClassifier()
+MAX_PIXELS = 50_000_000  # ~50 megapiksel: güncel telefon fotoğrafları sığar
+
+
+def too_many_pixels(data):
+    """Görseli açmadan, sadece dosya başlığından boyutuna bakar.
+
+    Dosya boyutu sınırı yetmez: tek renkli bir PNG birkaç yüz KB olup açılınca belleği doldurabilir.
+    """
+    try:
+        with Image.open(BytesIO(data)) as im:
+            width, height = im.size
+    except Image.DecompressionBombError:
+        return True
+    except OSError:
+        return False  # görsel değilse aşağıdaki çözümleme zaten reddeder
+    return width * height > MAX_PIXELS
 
 
 @app.get("/")
@@ -27,7 +45,11 @@ def solve_upload():
     file = request.files.get("gorsel")
     if file is None:
         return jsonify(hata="Görsel gönderilmedi."), 400
-    img = cv2.imdecode(np.frombuffer(file.read(), np.uint8), cv2.IMREAD_COLOR)
+    data = file.read()
+    if too_many_pixels(data):
+        return jsonify(hata=f"Görselin çözünürlüğü çok yüksek (en fazla {MAX_PIXELS // 1_000_000} megapiksel). "
+                            "Daha küçük bir görsel dene."), 413
+    img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
     if img is None:
         return jsonify(hata="Bu dosya görsel olarak okunamadı. JPG ya da PNG deneyin."), 400
 
