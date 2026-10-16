@@ -119,7 +119,10 @@ Kendi fotoğraf setinle de ölçebilirsin: her `foto.jpg` dosyasının yanında 
 python -m pytest
 ```
 
-Çözücü, sentetik eğik fotoğraflar, gerçek ekran görüntüleri ve web API'si test edilir.
+Çözücü, sentetik eğik fotoğraflar, gerçek ekran görüntüleri ve web API'si test edilir. Tarayıcı
+testleri (`tests/test_browser.py`) arayüzü gerçek bir tarayıcıda uçtan uca dener: görsel yükleme,
+düzeltme modu, ok tuşları, telefon görünümü, hata durumları. Kurulu Microsoft Edge'i kullanır;
+Edge yoksa `python -m playwright install chromium` gerekir. Playwright kurulu değilse bu testler atlanır.
 
 ## Proje yapısı
 
