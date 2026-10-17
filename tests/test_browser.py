@@ -132,12 +132,41 @@ def test_shows_rule_corrections(page):
     board[4] = 7
     fake = {"durum": "cozuldu", "mesaj": "Çözüldü.", "tahta": board, "cozum": board,
             "duzeltilen": [{"hucre": 4, "okunan": 1}], "emin_degil": [], "uyarilar": [], "koseler": None, "adimlar": [],
+            "zorluk": None, "ipuclari": [],
             "gorsel": "data:image/gif;base64,R0lGODlhAQABAAAAACw="}
     page.route("**/api/coz", lambda route: route.fulfill(content_type="application/json", body=json.dumps(fake)))
     page.set_input_files("#file", IMAGES / "ekran_1.jpg")
     page.wait_for_selector("#result")
     assert len(page.query_selector_all("#board .corrected")) == 1
     assert "1. satır 5. sütun: 1 okundu, 7 olmalı" in page.inner_text("#fixes")
+
+
+def test_hint_mode(page):
+    page.set_input_files("#file", IMAGES / "ekran_1.jpg")
+    page.wait_for_selector("#result")
+    assert "Zorluk:" in page.text_content("#difficulty")
+    solved_photo = page.get_attribute("#photo", "src")
+
+    page.click("#mode-hints")
+    assert page.get_attribute("#photo", "src") != solved_photo  # çözüm erkenden görünmesin
+    assert page.inner_text("#hint .hint-meta").startswith("İpucu 1 /")
+    total = int(page.inner_text("#hint .hint-meta").split("/")[1].split()[0])
+    assert len(page.query_selector_all("#board .solved")) == 1  # sadece ilk ipucunun rakamı açık
+    assert page.query_selector("#board .focus").inner_text().strip()  # ipucu hücresi vurgulu ve dolu
+
+    page.click("#hint-next")
+    assert page.inner_text("#hint .hint-meta").startswith("İpucu 2 /")
+    assert len(page.query_selector_all("#board .solved")) == 2
+    page.click("#hint-prev")
+    assert len(page.query_selector_all("#board .solved")) == 1
+
+    for _ in range(total - 1):
+        page.click("#hint-next")
+    assert page.is_disabled("#hint-next") and "tamamlandı" in page.inner_text("#hint-next")
+    assert len(page.query_selector_all("#board .solved")) == total
+
+    page.click("#mode-solution")
+    assert page.get_attribute("#photo", "src") == solved_photo
 
 
 def test_steps_panel(page):

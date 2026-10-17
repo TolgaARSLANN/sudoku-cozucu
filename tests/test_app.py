@@ -38,6 +38,8 @@ def test_solves_uploaded_screenshot(client):
     assert data["gorsel"].startswith("data:image/jpeg;base64,")
     assert data["duzeltilen"] == [] and isinstance(data["emin_degil"], list)
     assert data["uyarilar"] == []  # çözüldüyse kalite uyarısı yok
+    assert data["zorluk"] in ("Kolay", "Orta", "Zor", "Şeytani")
+    assert len(data["ipuclari"]) == data["tahta"].count(0)  # her boş hücre için bir ipucu
 
 
 def test_returns_processing_steps(client):
@@ -85,6 +87,7 @@ def test_solve_corrected_board(client):
     data = post_board(client, PUZZLE).get_json()
     assert data["durum"] == "cozuldu" and all(data["cozum"])
     assert data["gorsel"] is None  # fotoğraf gönderilmediyse çizilecek bir şey yok
+    assert data["zorluk"] == "Kolay" and len(data["ipuclari"]) == PUZZLE.count(0)
 
 
 def test_corrected_board_with_missing_digits(client):

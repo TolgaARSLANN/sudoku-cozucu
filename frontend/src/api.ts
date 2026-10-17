@@ -15,6 +15,8 @@ export interface ImageResult {
   duzeltilen: Correction[];
   emin_degil: number[];
   uyarilar: string[];        // okuma başarısızsa fotoğrafın olası sorunları ve ne yapılacağı
+  zorluk: string | null;     // Kolay / Orta / Zor / Şeytani (çözüldüyse)
+  ipuclari: Hint[];          // insan gibi çözümün adımları
   koseler: number[][] | null; // ızgaranın fotoğraftaki 4 köşesi; düzeltme sonrası çizim için geri gönderilir
   gorsel: string;            // çözüm çizilmiş görsel (data URL)
   adimlar: Step[];           // "Nasıl gördüm?" paneli
@@ -32,6 +34,18 @@ export interface BoardResult {
   mesaj: string;
   cozum: number[] | null;
   gorsel: string | null;     // fotoğraf gönderildiyse çözüm çizilmiş hali
+  zorluk: string | null;
+  ipuclari: Hint[];
+}
+
+/** İpucu: bir hücreye bir rakam ve gerekçesi. */
+export interface Hint {
+  hucre: number;
+  rakam: number;
+  teknik: string;            // ipucunun kullandığı en zor teknik
+  aciklama: string;
+  on_adimlar: { teknik: string; aciklama: string }[];  // bu ipucu için önce gereken elemeler
+  vurgu: number[];           // gerekçede rol oynayan hücreler
 }
 
 /** Düzeltme sonrası çözümün çizileceği asıl fotoğraf ve ızgaranın köşeleri. */

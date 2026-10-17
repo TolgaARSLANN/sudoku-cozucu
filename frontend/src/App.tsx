@@ -19,6 +19,7 @@ export default function App() {
   const fileInput = useRef<HTMLInputElement>(null);
   const resultCount = useRef(0);
   const photo = useRef<Photo | null>(null);  // düzeltme sonrası çözümü çizmek için son fotoğraf
+  const originalUrl = useRef<string | null>(null);  // ipucu modunda çözümsüz fotoğraf
 
   // Aynı anda tek istek: sürerken yeni yükleme ve tekrar tıklama yok sayılır
   const startBusy = (on: boolean) => {
@@ -39,10 +40,15 @@ export default function App() {
     try {
       const data = await solveImage(file);
       photo.current = data.koseler && { file, corners: data.koseler };
+      if (originalUrl.current) URL.revokeObjectURL(originalUrl.current);
+      originalUrl.current = URL.createObjectURL(file);
       setStatus({ kind: data.durum, text: data.mesaj });
       setResult({
         id: ++resultCount.current,
         image: data.gorsel,
+        original: originalUrl.current,
+        difficulty: data.zorluk,
+        hints: data.ipuclari,
         board: data.tahta,
         solution: data.cozum,
         corrected: data.duzeltilen,
@@ -69,6 +75,7 @@ export default function App() {
       if (data.cozum) {
         setResult(r => r && {
           ...r, board, solution: data.cozum, corrected: [], unsure: [], image: data.gorsel ?? r.image,
+          difficulty: data.zorluk, hints: data.ipuclari,
         });
       }
     } catch (e) {
@@ -133,7 +140,7 @@ export default function App() {
           {view === "hero" && <Hero onPick={openPicker} busy={busy} />}
           {view === "loading" && <LoadingSkeleton />}
           {view === "result" && result && (
-            <ResultView result={result} busy={busy} onNewImage={openPicker} onFix={handleFix} />
+            <ResultView key={result.id} result={result} busy={busy} onNewImage={openPicker} onFix={handleFix} />
           )}
         </div>
       </main>

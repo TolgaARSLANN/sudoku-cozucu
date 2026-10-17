@@ -13,6 +13,7 @@ from PIL import Image
 
 from adimlar import build_steps
 from digits import DigitClassifier
+from ipucu import explain
 from kalite import WARNINGS, check_quality
 from solver import solve, solve_unique
 from vision import MESSAGES, draw_handwritten, solve_image
@@ -89,6 +90,7 @@ def solve_upload():
                     " düzelttim (turuncu olanlar).")
     # Kalite uyarıları sadece başarısızlıkta: eski telefonların çözülen fotoğrafları da "bulanık" ölçülüyor
     warnings = [] if result.status == "cozuldu" else check_quality(img, result.corners)
+    analysis = explain(result.board) if result.solution else None
     return jsonify(
         durum=result.status,
         mesaj=message,
@@ -97,6 +99,8 @@ def solve_upload():
         duzeltilen=[{"hucre": i, "okunan": old} for i, old in result.corrected.items()],
         emin_degil=result.unsure,
         uyarilar=[WARNINGS[w] for w in warnings],
+        zorluk=analysis and analysis["zorluk"],
+        ipuclari=analysis["ipuclari"] if analysis else [],
         koseler=None if result.corners is None else result.corners.tolist(),
         gorsel=encode_image(result.image),
         adimlar=[{"baslik": title, "aciklama": text, "gorsel": encode_image(image)}
@@ -123,7 +127,7 @@ def solve_board():
             message = "Bu tahtanın birden fazla çözümü var; eksik rakam olabilir."
         else:
             message = "Bu tahtada çelişki var ya da çözümü yok. Rakamları kontrol et."
-        return jsonify(durum="cozulemedi", mesaj=message, cozum=None, gorsel=None)
+        return jsonify(durum="cozulemedi", mesaj=message, cozum=None, gorsel=None, zorluk=None, ipuclari=[])
 
     image = None
     if "gorsel" in request.files:
@@ -135,7 +139,9 @@ def solve_board():
             return jsonify(hata="Izgaranın köşe bilgisi geçersiz."), 400
         draw_handwritten(img, corners, board, solution)
         image = encode_image(img)
-    return jsonify(durum="cozuldu", mesaj="Çözüldü.", cozum=solution, gorsel=image)
+    analysis = explain(board)
+    return jsonify(durum="cozuldu", mesaj="Çözüldü.", cozum=solution, gorsel=image,
+                   zorluk=analysis["zorluk"], ipuclari=analysis["ipuclari"])
 
 
 @app.errorhandler(413)

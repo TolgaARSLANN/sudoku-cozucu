@@ -13,6 +13,9 @@ fontlardan üretilen sentetik veriyle eğitilen bir k-NN sınıflandırıcıyla 
   ve turuncu gösterilir
 - **Düzeltme modu:** okunamayan rakamı tahtada elle düzeltip tekrar çözdürme; emin olunmayan
   hücreler sarıyla işaretlenir
+- **İpucu modu ve zorluk derecesi:** çözümü hamle hamle açar; her hamlede hangi tekniğin
+  (tek aday, gizli tek, açık çift, kutu-satır kesişimi, gizli çift, açık üçlü, X-Wing) neden işe
+  yaradığını anlatır. Bulmacaya, gereken en zor tekniğe göre Kolay / Orta / Zor / Şeytani der.
 - **Fotoğraf kalite önerileri:** okuma başarısız olursa olası sebebi (bulanıklık, küçük ızgara,
   karanlık, parlama) ve ne yapılacağını söyler
 - **"Nasıl gördüm?" paneli:** fotoğrafın adım adım nasıl işlendiğini gösterir (siyah-beyaz görüntü,
@@ -145,7 +148,8 @@ adimlar.py        "Nasıl gördüm?" paneli için açıklamalı ara görseller
 kalite.py         fotoğraf kalite kontrolü (bulanıklık, ızgara boyutu, karanlık, parlama)
 fonts/            el yazısı yazı tipi Caveat (SIL Open Font License, fonts/OFL.txt)
 digits.py         sentetik veri üretimi ve k-NN rakam tanıma
-solver.py         sudoku çözücü
+solver.py         sudoku çözücü (deneme yanılma, tek çözüm doğrulaması)
+ipucu.py          insan gibi çözen çözücü: ipuçları ve zorluk derecesi
 benchmark.py      gerçek fotoğraflarda doğruluk ölçümü
 veri_indir.py     ölçümde kullanılan 80 fotoğrafı indirir
 tests/            otomatik testler

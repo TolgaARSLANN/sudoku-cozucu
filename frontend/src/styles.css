@@ -204,6 +204,26 @@ kbd { font: 12px/1 ui-monospace, Consolas, monospace; padding: 3px 6px; border: 
   color: var(--text); font: inherit; font-weight: 600; caret-color: var(--accent);
 }
 .cell input:focus { outline: none; background: var(--accent-soft); box-shadow: inset 0 0 0 3px var(--accent); }
+.cell.hl { background: var(--accent-soft); }
+.cell.focus { box-shadow: inset 0 0 0 3px var(--accent); font-weight: 700; animation: pop .3s var(--ease-out); }
+
+/* ---------- İpucu modu ---------- */
+.segmented { display: inline-flex; padding: 3px; gap: 2px; border-radius: var(--radius-sm); background: var(--surface-2); }
+.segmented button {
+  min-height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: var(--muted);
+  font: 600 14px var(--font-body); cursor: pointer;
+}
+.segmented button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+.segmented button:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+.hint-card { margin-top: 14px; padding: 14px 16px; border-radius: var(--radius-sm); background: var(--surface-2); }
+.hint-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+             color: var(--muted); font-size: 13px; font-weight: 600; }
+.hint-card p { margin: 8px 0 0; font-size: 15px; }
+.hint-before { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); }
+.hint-before ol { margin: 6px 0 0; padding-left: 20px; }
+.hint-before li + li { margin-top: 4px; }
+.hint-before strong { color: var(--text); font-weight: 600; }
+
 .board.animate .cell.solved { animation: pop .32s var(--ease-out) both; animation-delay: calc(var(--d) * 9ms); }
 @keyframes pop { from { opacity: 0; transform: scale(.6); } }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } }

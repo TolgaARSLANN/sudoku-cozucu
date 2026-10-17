@@ -9,6 +9,8 @@ interface BoardProps {
   values?: string[];               // düzenleme modunda hücre değerleri
   onChange?: (index: number, value: string) => void;
   animate?: boolean;               // çözülen rakamlar sırayla belirsin
+  highlight?: number[];            // ipucu modunda gerekçeye konu olan hücreler
+  focus?: number;                  // ipucu modunda rakamın yerleştiği hücre
   id?: string;
   decorative?: boolean;            // giriş ekranındaki örnek: ekran okuyuculardan gizli
 }
@@ -16,7 +18,8 @@ interface BoardProps {
 const ARROW_STEPS: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -9, ArrowDown: 9 };
 
 export function Board({
-  board, solution, corrected = [], unsure = [], values, onChange, animate = false, id, decorative = false,
+  board, solution, corrected = [], unsure = [], values, onChange, animate = false, highlight = [], focus, id,
+  decorative = false,
 }: BoardProps) {
   const inputs = useRef<(HTMLInputElement | null)[]>([]);
   const fixedFrom = new Map(corrected.map(c => [c.hucre, c.okunan]));
@@ -39,6 +42,8 @@ export function Board({
     if (r === 2 || r === 5) classes.push("box-b");
     if (c === 8) classes.push("c9");
     if (r === 8) classes.push("r9");
+    if (highlight.includes(i)) classes.push("hl");
+    if (focus === i) classes.push("focus");
 
     if (!solution && values && onChange) {
       if (unsure.includes(i)) classes.push("unsure");
@@ -72,10 +77,11 @@ export function Board({
       classes.push("given");
       return <div key={i} className={classes.join(" ")}>{board[i]}</div>;
     }
+    if (!solution?.[i]) return <div key={i} className={classes.join(" ")} />;  // ipucu modunda henüz açılmamış
     classes.push("solved");
     return (
       <div key={i} className={classes.join(" ")} style={{ "--d": order++ } as CSSProperties}>
-        {solution?.[i]}
+        {solution[i]}
       </div>
     );
   });

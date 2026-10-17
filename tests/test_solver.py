@@ -48,6 +48,6 @@ def test_unique_rejects_puzzle_with_missing_digits():
 
 def test_hard_puzzle_within_step_limit():
     # "Dünyanın en zor sudokusu" (Arto Inkala)
-    hard = "800000000003600000070090000050007000000045700000100030001000068008500010090000400"
-    result = solve(to_board(hard))
+    hard = "800000000003600000070090200050007000000045700000100030001000068008500010090000400"
+    result = solve_unique(to_board(hard))  # tek çözümlü olduğu da doğrulansın
     assert result is not None and all(result)
