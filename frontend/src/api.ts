@@ -16,6 +16,14 @@ export interface ImageResult {
   emin_degil: number[];
   koseler: number[][] | null; // ızgaranın fotoğraftaki 4 köşesi; düzeltme sonrası çizim için geri gönderilir
   gorsel: string;            // çözüm çizilmiş görsel (data URL)
+  adimlar: Step[];           // "Nasıl gördüm?" paneli
+}
+
+/** Görüntü işlemenin bir adımı: açıklamalı ara görsel. */
+export interface Step {
+  baslik: string;
+  aciklama: string;
+  gorsel: string;
 }
 
 export interface BoardResult {

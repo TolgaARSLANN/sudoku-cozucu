@@ -1,7 +1,8 @@
 import { useState } from "react";
-import type { Correction } from "../api";
+import type { Correction, Step } from "../api";
 import { Board } from "./Board";
 import { Icon } from "./Icon";
+import { StepsPanel } from "./StepsPanel";
 
 export interface ResultData {
   id: number;                 // her yeni görselde değişir; düzeltme alanını sıfırlamak için
@@ -10,6 +11,7 @@ export interface ResultData {
   solution: number[] | null;
   corrected: Correction[];
   unsure: number[];
+  steps: Step[];
 }
 
 interface ResultViewProps {
@@ -56,6 +58,8 @@ export function ResultView({ result, busy, onNewImage, onFix }: ResultViewProps)
         </div>
         {board && <BoardPanel key={result.id} result={{ ...result, board }} busy={busy} onFix={onFix} />}
       </div>
+      {/* Izgara bulunamadıysa sebebi burada görülür, o yüzden açık gelir */}
+      {result.steps.length > 0 && <StepsPanel key={result.id} steps={result.steps} open={!board} />}
     </section>
   );
 }

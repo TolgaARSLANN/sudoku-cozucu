@@ -9,6 +9,7 @@ import threading
 import time
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 sync_api = pytest.importorskip("playwright.sync_api")
@@ -129,12 +130,33 @@ def test_shows_rule_corrections(page):
     board = [int(c) for c in PUZZLE]
     board[4] = 7
     fake = {"durum": "cozuldu", "mesaj": "Çözüldü.", "tahta": board, "cozum": board,
-            "duzeltilen": [{"hucre": 4, "okunan": 1}], "emin_degil": [], "gorsel": "data:image/gif;base64,R0lGODlhAQABAAAAACw="}
+            "duzeltilen": [{"hucre": 4, "okunan": 1}], "emin_degil": [], "koseler": None, "adimlar": [],
+            "gorsel": "data:image/gif;base64,R0lGODlhAQABAAAAACw="}
     page.route("**/api/coz", lambda route: route.fulfill(content_type="application/json", body=json.dumps(fake)))
     page.set_input_files("#file", IMAGES / "ekran_1.jpg")
     page.wait_for_selector("#result")
     assert len(page.query_selector_all("#board .corrected")) == 1
     assert "1. satır 5. sütun: 1 okundu, 7 olmalı" in page.inner_text("#fixes")
+
+
+def test_steps_panel(page):
+    page.set_input_files("#file", IMAGES / "ekran_1.jpg")
+    page.wait_for_selector("#result")
+    assert page.get_attribute("#steps", "open") is None  # çözüldüyse kapalı gelir
+    page.click("#steps summary")
+    titles = [t.inner_text() for t in page.query_selector_all("#steps .step h3")]
+    assert titles == ["Siyah-beyaz görüntü", "Izgara adayları", "Düzleştirilmiş tahta",
+                      "Izgara çizgileri silindi", "Okunan rakamlar"]
+    assert all(img.is_visible() for img in page.query_selector_all("#steps .step img"))
+
+
+def test_steps_panel_explains_missing_grid(page, tmp_path):
+    blank = tmp_path / "bos.jpg"
+    save_image(str(blank), np.full((480, 640, 3), 200, np.uint8))
+    page.set_input_files("#file", blank)
+    page.wait_for_selector("#result")
+    assert page.get_attribute("#steps", "open") is not None  # ızgara yoksa sebebi görünsün diye açık
+    assert len(page.query_selector_all("#steps .step")) == 2
 
 
 def test_rejects_non_image(page, tmp_path):

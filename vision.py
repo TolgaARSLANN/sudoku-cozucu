@@ -41,8 +41,11 @@ def grid_score(th, quad, size=270):
     return float(np.mean(peaks))
 
 
-def find_grid(gray):
-    """Sudoku ızgarasının köşelerini bulur: sol-üst, sağ-üst, sağ-alt, sol-alt."""
+def find_grid(gray, trace=None):
+    """Sudoku ızgarasının köşelerini bulur: sol-üst, sağ-üst, sağ-alt, sol-alt.
+
+    trace sözlüğü verilirse "Nasıl gördüm?" paneli için ara sonuçlar ona yazılır.
+    """
     scale = min(1.0, 640 / gray.shape[1])  # hız için küçük çözünürlükte ara
     if scale < 1:
         gray = cv2.resize(gray, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
@@ -50,7 +53,8 @@ def find_grid(gray):
     th = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                                cv2.THRESH_BINARY_INV, 11, 2)
     contours, _ = cv2.findContours(th, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    candidates = []  # (alan, skor, köşeler)
+    candidates = []  # ızgara testini geçenler: (alan, skor, köşeler)
+    scored = []      # puanlanan tüm dörtgenler (panelde gösterilir): (köşeler, skor)
     for c in sorted(contours, key=cv2.contourArea, reverse=True)[:10]:
         if cv2.contourArea(c) < gray.size * 0.02:
             break
@@ -63,8 +67,11 @@ def find_grid(gray):
             continue
         quad = order_corners(approx.reshape(4, 2).astype(np.float32))
         score = grid_score(th, quad)
+        scored.append((quad / scale, score))
         if score >= 0.4:
             candidates.append((cv2.contourArea(hull), score, quad))
+    if trace is not None:
+        trace["threshold"], trace["quads"] = th, scored
     if not candidates:
         return None
     # 1) En iyi skora yakın olanların en büyüğü: sayfadaki küçük "dünkü çözüm" ızgarası asıl bulmacaya yenilir.
@@ -76,7 +83,7 @@ def find_grid(gray):
     return quad / scale
 
 
-def find_digits(warped_gray):
+def find_digits(warped_gray, trace=None):
     """Düzleştirilmiş tahtadaki rakamları bulur: {hücre indeksi: rakam maskesi}.
 
     Hücre sınırlarına körü körüne güvenmez: köşeler biraz kaymışsa ya da sayfa kıvrıksa rakam
@@ -110,8 +117,10 @@ def find_digits(warped_gray):
             continue
         idx = int(cy // CELL) * 9 + int(cx // CELL)
         if idx not in digits or area > digits[idx][0]:
-            digits[idx] = (area, mask)
-    return {i: mask.astype(np.uint8) * 255 for i, (_, mask) in digits.items()}
+            digits[idx] = (area, mask, (x, y, w, h))
+    if trace is not None:
+        trace["ink"], trace["boxes"] = ink, [box for _, _, box in digits.values()]
+    return {i: mask.astype(np.uint8) * 255 for i, (_, mask, _) in digits.items()}
 
 
 def warp_grid(gray, corners):
@@ -251,14 +260,23 @@ class Result:
     corners: np.ndarray = None                     # ızgaranın köşeleri, doğru yöne çevrilmiş
 
 
-def solve_image(img, clf):
-    """Tek bir görselin baştan sona işlenmesi."""
+def solve_image(img, clf, trace=None):
+    """Tek bir görselin baştan sona işlenmesi.
+
+    trace sözlüğü verilirse "Nasıl gördüm?" paneli için ara sonuçlar ona yazılır.
+    """
     out = img.copy()
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    corners = find_grid(gray)
+    corners = find_grid(gray, trace)
     if corners is None:
         return Result(out, "izgara_yok")
+    if trace is not None:
+        trace["chosen"] = corners
     corners, board, scores = read_board_any_rotation(gray, corners, clf)
+    if trace is not None:
+        trace["warped"] = warp_grid(gray, corners)
+        trace["scores"] = scores
+        find_digits(trace["warped"], trace)  # seçilen yönün çizgisiz hali ve rakam kutuları
     solution, board, corrected = correct_and_solve(board, scores)
     unsure = [i for i in unsure_cells(scores) if i not in corrected]
     draw_outline(out, corners, solution is not None)

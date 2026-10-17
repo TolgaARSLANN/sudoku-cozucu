@@ -141,6 +141,38 @@ kbd { font: 12px/1 ui-monospace, Consolas, monospace; padding: 3px 6px; border: 
 .fixes ul { margin: 6px 0 0; padding-left: 18px; }
 .panel .actions { margin-top: 16px; }
 
+/* ---------- "Nasıl gördüm?" paneli ---------- */
+.steps-panel { margin-top: 20px; padding: 0; }
+.steps-panel summary {
+  display: flex; align-items: center; gap: 14px; padding: 18px 20px; cursor: pointer; list-style: none;
+  border-radius: var(--radius);
+}
+.steps-panel summary::-webkit-details-marker { display: none; }
+.steps-panel summary::after {
+  content: ""; width: 9px; height: 9px; margin-left: auto; flex: none;
+  border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg); transition: transform .2s var(--ease-out);
+}
+.steps-panel[open] summary::after { transform: rotate(-135deg); }
+.steps-panel summary:hover { background: var(--surface-2); }
+.steps-panel summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.steps-panel summary strong { display: block; font: 600 17px var(--font-head); }
+.summary-hint { color: var(--muted); font-size: 14px; }
+.summary-icon { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border-radius: 10px;
+                background: var(--accent-soft); color: var(--accent); }
+.steps { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;
+         margin: 0; padding: 4px 20px 20px; list-style: none; }
+.step { display: flex; flex-direction: column; gap: 10px; }
+.step-head { display: flex; align-items: center; gap: 10px; }
+.step-head h3 { font-size: 15px; font-weight: 600; }
+.step-num { display: grid; place-items: center; width: 26px; height: 26px; flex: none; border-radius: 50%;
+            background: var(--accent); color: var(--on-accent); font: 600 13px/1 var(--font-head); }
+.step-image { position: relative; background: var(--surface-2); border-radius: var(--radius-sm);
+              overflow: hidden; aspect-ratio: 4 / 3; }
+/* Çerçeveyi tam doldurup içine sığdır: kare görseller de kırpılmadan görünsün */
+.step-image img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.step p { margin: 0; color: var(--muted); font-size: 14px; }
+
 /* ---------- Sudoku tahtası ---------- */
 .board {
   display: grid; grid-template-columns: repeat(9, 1fr); aspect-ratio: 1; width: 100%; max-width: 520px;
@@ -225,6 +257,8 @@ footer .icon { width: 16px; height: 16px; }
   .toolbar .actions, .toolbar .actions .btn { width: 100%; }
   .toolbar .actions .btn { flex: 1; }
   .panel { padding: 14px; }
+  .steps-panel { padding: 0; }
+  .steps { padding: 4px 14px 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important;

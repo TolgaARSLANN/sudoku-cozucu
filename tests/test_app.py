@@ -2,6 +2,8 @@ import io
 import json
 from pathlib import Path
 
+import cv2
+import numpy as np
 import pytest
 
 import app as server
@@ -34,6 +36,19 @@ def test_solves_uploaded_screenshot(client):
     assert len(data["cozum"]) == 81 and all(data["cozum"])
     assert data["gorsel"].startswith("data:image/jpeg;base64,")
     assert data["duzeltilen"] == [] and isinstance(data["emin_degil"], list)
+
+
+def test_returns_processing_steps(client):
+    steps = post(client, (IMAGES / "ekran_1.jpg").read_bytes()).get_json()["adimlar"]
+    assert len(steps) == 5
+    assert all(s["baslik"] and s["aciklama"] and s["gorsel"].startswith("data:image/jpeg") for s in steps)
+
+
+def test_steps_without_grid(client):
+    _, png = cv2.imencode(".png", np.full((480, 640, 3), 200, np.uint8))
+    data = post(client, png.tobytes(), "bos.png").get_json()
+    assert data["durum"] == "izgara_yok"
+    assert [s["baslik"] for s in data["adimlar"]] == ["Siyah-beyaz görüntü", "Izgara adayları"]
 
 
 def test_rejects_non_image(client):

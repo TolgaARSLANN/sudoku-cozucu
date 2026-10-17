@@ -11,6 +11,7 @@ import numpy as np
 from flask import Flask, jsonify, request, send_from_directory
 from PIL import Image
 
+from adimlar import build_steps
 from digits import DigitClassifier
 from solver import solve, solve_unique
 from vision import MESSAGES, draw_outline, draw_solution, solve_image
@@ -79,7 +80,8 @@ def solve_upload():
     img, error = read_upload()
     if error:
         return error
-    result = solve_image(img, clf)
+    trace = {}  # "Nasıl gördüm?" paneli için ara sonuçlar
+    result = solve_image(img, clf, trace)
     message = MESSAGES[result.status]
     if result.corrected:
         message += (f" {len(result.corrected)} rakamı okurken emin olamadım, sudoku kurallarına göre"
@@ -93,6 +95,8 @@ def solve_upload():
         emin_degil=result.unsure,
         koseler=None if result.corners is None else result.corners.tolist(),
         gorsel=encode_image(result.image),
+        adimlar=[{"baslik": title, "aciklama": text, "gorsel": encode_image(image)}
+                 for title, text, image in build_steps(img, trace, result)],
     )
 
 
