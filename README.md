@@ -65,7 +65,8 @@ python cli.py --kamera          # canlı kamera (çıkış: q)
    konturlar bulunur. Her büyük dörtgen düzleştirilir ve iç çizgilerin gerçekten 1/9 aralıklarla
    durup durmadığı puanlanır. Böylece kağıt kenarı, tek bir 3x3 kutu ya da sayfadaki küçük
    "dünkü çözüm" ızgarası asıl bulmacayla karışmaz. Kenarı kopuk ızgaralar için konturun dış
-   bükey zarfı kullanılır.
+   bükey zarfı kullanılır; bulanık fotoğraflarda kesik kesik kalan ince çizgiler için eşiklenmiş
+   görüntünün hafifçe kalınlaştırılmış halinden de aday üretilir.
 2. **Düzleştirme:** Izgara 450x450'lik bir kareye çevrilip 81 hücreye bölünür.
 3. **Rakam okuma** (`vision.find_digits`, `vision.read_board`): Izgara çizgileri morfolojik
    açma ile silinir. Hücre sınırlarına körü körüne güvenilmez: tüm tahtada rakam boyutundaki
