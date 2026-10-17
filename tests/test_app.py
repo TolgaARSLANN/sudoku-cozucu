@@ -134,3 +134,30 @@ def test_rejects_too_many_pixels(client, monkeypatch):
 def test_missing_file(client):
     res = client.post("/api/coz")
     assert res.status_code == 400
+
+
+def check(client, data, name="foto.jpg"):
+    return client.post("/api/kontrol", data={"gorsel": (io.BytesIO(data), name)},
+                       content_type="multipart/form-data")
+
+
+def test_checks_pen_filled_photo(client):
+    data = check(client, (IMAGES / "kalem.jpg").read_bytes()).get_json()
+    assert data["durum"] == "kontrol_edildi"
+    assert len(data["cozum"]) == 81 and all(data["cozum"])
+    summary = data["ozet"]
+    assert summary["yanlis"] == 0
+    assert summary["dogru"] + summary["kontrol"] + summary["bos"] + \
+        sum(r["durum"] == "basili" for r in data["sonuclar"]) == 81
+    assert data["mesaj"].startswith(f"{summary['dogru']} doğru, 0 yanlış")
+    assert all(r["durum"] in ("basili", "dogru", "yanlis", "kontrol") for r in data["sonuclar"])
+
+
+def test_check_without_grid(client):
+    _, png = cv2.imencode(".png", np.full((480, 640, 3), 200, np.uint8))
+    data = check(client, png.tobytes(), "bos.png").get_json()
+    assert data["durum"] == "izgara_yok" and data["cozum"] is None and data["sonuclar"] == []
+
+
+def test_check_requires_image(client):
+    assert client.post("/api/kontrol").status_code == 400

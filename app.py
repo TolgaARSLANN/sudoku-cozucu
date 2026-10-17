@@ -15,12 +15,14 @@ from adimlar import build_steps
 from digits import DigitClassifier
 from ipucu import explain
 from kalite import WARNINGS, check_quality
+from kontrol import HandwritingReader, check_image
 from solver import solve, solve_unique
 from vision import MESSAGES, draw_handwritten, solve_image
 
 app = Flask(__name__, static_folder="static")
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024
 clf = DigitClassifier()
+reader = HandwritingReader()
 MAX_PIXELS = 50_000_000  # ~50 megapiksel: güncel telefon fotoğrafları sığar
 
 
@@ -142,6 +144,36 @@ def solve_board():
     analysis = explain(board)
     return jsonify(durum="cozuldu", mesaj="Çözüldü.", cozum=solution, gorsel=image,
                    zorluk=analysis["zorluk"], ipuclari=analysis["ipuclari"])
+
+
+CHECK_MESSAGES = {
+    "izgara_yok": MESSAGES["izgara_yok"],
+    "cozulemedi": "Basılı rakamlardan bulmacayı kuramadım. Daha net ya da daha yakından çekilmiş bir "
+                  "fotoğraf deneyin.",
+}
+
+
+@app.post("/api/kontrol")
+def check_upload():
+    """Kalemle doldurulmuş sudokuyu kontrol eder: el yazısı her rakam doğru mu?"""
+    img, error = read_upload()
+    if error:
+        return error
+    result = check_image(img, clf, reader)
+    if result.solution is None:
+        return jsonify(durum=result.status, mesaj=CHECK_MESSAGES[result.status], cozum=None, sonuclar=[],
+                       ozet=None, gorsel=encode_image(img))
+    counts = {v: sum(1 for x in result.verdicts.values() if x == v) for v in ("dogru", "yanlis", "kontrol")}
+    counts["bos"] = 81 - len(result.verdicts)
+    return jsonify(
+        durum=result.status,
+        mesaj=f"{counts['dogru']} doğru, {counts['yanlis']} yanlış, {counts['kontrol']} kontrol et, "
+              f"{counts['bos']} boş.",
+        cozum=result.solution,
+        sonuclar=[{"hucre": i, "durum": v} for i, v in sorted(result.verdicts.items())],
+        ozet=counts,
+        gorsel=encode_image(img),
+    )
 
 
 @app.errorhandler(413)

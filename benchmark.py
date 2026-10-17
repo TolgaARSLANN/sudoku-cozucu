@@ -4,9 +4,11 @@ Klasörde her foto.jpg için yanında doğru cevabı içeren foto.dat olmalı
 (wichtounet/sudoku_dataset biçimi: 2 satır başlık + 9 satır rakam).
 
     python benchmark.py <klasör> [--hatalari-kaydet <çıktı klasörü>]
+    python benchmark.py <klasör> --kontrol     # kalemle doldurulmuş sudoku kontrolü (veri/karisik, veri/dogal)
 """
 import argparse
 import time
+from collections import Counter
 from pathlib import Path
 
 from digits import DigitClassifier
@@ -19,14 +21,43 @@ def read_truth(path):
     return [int(v) for line in lines for v in line.split()]
 
 
+def check_benchmark(photos, clf):
+    """.dat yazılmış her rakamı içerir; yazılan rakam çözümdekiyle aynıysa ona "yanlış" demek yanlış alarmdır."""
+    from kontrol import HandwritingReader, check_image
+    reader = HandwritingReader()
+    solved, verdicts = 0, Counter()
+    for photo in photos:
+        written = read_truth(photo.with_suffix(".dat"))
+        result = check_image(load_image(str(photo)), clf, reader)
+        if result.solution != solve(written):
+            print(f"{photo.name}: çözüm {'bulunamadı' if result.solution is None else 'YANLIŞ'}")
+            continue
+        solved += 1
+        for i, v in result.verdicts.items():
+            if written[i]:
+                verdicts[v if written[i] == result.solution[i] else f"gerçekten yanlış → {v}"] += 1
+    hand = sum(n for v, n in verdicts.items() if v in ("dogru", "yanlis", "kontrol"))
+    print(f"\n{len(photos)} fotoğraf")
+    print(f"Doğru çözüldü       : {solved}/{len(photos)}")
+    print(f"Basılı sayılan      : {verdicts['basili']}")
+    print(f"El yazısı (doğru yazılmış): {hand} → 'doğru' {verdicts['dogru']}, "
+          f"'kontrol et' {verdicts['kontrol']}, YANLIŞ ALARM {verdicts['yanlis']}")
+    for v, n in sorted(verdicts.items()):
+        if v.startswith("gerçekten"):
+            print(f"Gerçekten yanlış yazılmış: {v.split('→ ')[1]} {n}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("folder")
     ap.add_argument("--hatalari-kaydet", dest="fail_dir")
+    ap.add_argument("--kontrol", action="store_true")
     args = ap.parse_args()
 
     clf = DigitClassifier()
     photos = sorted(p for p in Path(args.folder).glob("*.jpg") if p.with_suffix(".dat").exists())
+    if args.kontrol:
+        return check_benchmark(photos, clf)
     stats = dict(grid=0, perfect=0, solved=0, false=0, corrected=0, missed=0, extra=0, wrong=0, digits=0)
     start = time.time()
     for photo in photos:

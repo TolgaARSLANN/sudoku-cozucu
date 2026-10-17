@@ -1,0 +1,5 @@
+# Sadece el yazısı modelini yeniden eğitmek için (egit_el_yazisi.py); uygulamanın kendisi gerektirmez
+-r requirements.txt
+torch>=2.5
+onnx>=1.17
+onnxscript>=0.2

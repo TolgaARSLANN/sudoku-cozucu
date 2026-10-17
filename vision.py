@@ -95,6 +95,15 @@ def find_grid(gray, trace=None):
     return quad / scale
 
 
+def _near_cell_border(lines, axis, tolerance=0.2):
+    """Çizgi parçalarından sadece hücre sınırına yakın olanlar (axis 0: yatay çizgi, 1: dikey çizgi)."""
+    n, labels, _, centers = cv2.connectedComponentsWithStats(lines)
+    pos = centers[:, 1 - axis] % CELL
+    keep = np.minimum(pos, CELL - pos) < tolerance * CELL
+    keep[0] = False  # arka plan
+    return (keep[labels] * 255).astype(np.uint8)
+
+
 def find_digits(warped_gray, trace=None):
     """Düzleştirilmiş tahtadaki rakamları bulur: {hücre indeksi: rakam maskesi}.
 
@@ -105,11 +114,13 @@ def find_digits(warped_gray, trace=None):
     th = cv2.adaptiveThreshold(cv2.GaussianBlur(warped_gray, (5, 5), 0), 255,
                                cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 31, 7)
     th = cv2.morphologyEx(th, cv2.MORPH_CLOSE, np.ones((2, 2), np.uint8))
-    # Izgara çizgilerini sil: hiçbir rakamda hücre boyuna yakın düz bir çizgi yoktur
+    # Izgara çizgilerini sil: basılı rakamlarda hücre boyuna yakın düz çizgi yoktur. Büyük el yazısında
+    # (1, 4, 7'nin gövdesi) olabilir; onlar hücrenin ortasında durur, sadece sınıra yakın çizgiler silinir.
     length = int(CELL * 0.8)
     h_lines = cv2.morphologyEx(th, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_RECT, (length, 1)))
     v_lines = cv2.morphologyEx(th, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_RECT, (1, length)))
-    ink = th & ~cv2.dilate(h_lines | v_lines, np.ones((3, 3), np.uint8))
+    lines = _near_cell_border(h_lines, axis=0) | _near_cell_border(v_lines, axis=1)
+    ink = th & ~cv2.dilate(lines, np.ones((3, 3), np.uint8))
     # Bulanıklıktan kopmuş rakam parçaları birleşsin diye hafifçe kalınlaştırıp etiketle
     n, labels, stats, _ = cv2.connectedComponentsWithStats(cv2.dilate(ink, np.ones((3, 3), np.uint8)))
     digits = {}

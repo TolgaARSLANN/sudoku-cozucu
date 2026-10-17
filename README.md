@@ -3,8 +3,13 @@
 Sudokunun fotoğrafını ya da ekran görüntüsünü ver; program ızgarayı bulur, rakamları okur,
 bulmacayı çözer ve çözümü **fotoğrafın üstüne, kağıda kalemle yazılmış gibi** çizer.
 
-Derin öğrenme kütüphanesi kullanmaz: görüntü işleme OpenCV ile, rakam tanıma ise bilgisayardaki
-fontlardan üretilen sentetik veriyle eğitilen bir k-NN sınıflandırıcıyla yapılır.
+Kalemle doldurulmuş bir sudokuyu da **kontrol eder**: el yazısı rakamları okur ve yanlış
+yazılanları bulur.
+
+Çalışırken derin öğrenme kütüphanesi gerektirmez: görüntü işleme OpenCV ile, basılı rakam tanıma
+bilgisayardaki fontlardan üretilen sentetik veriyle eğitilen bir k-NN sınıflandırıcıyla yapılır.
+El yazısı için küçük bir sinir ağı PyTorch ile eğitilip ONNX olarak projeye konmuştur; OpenCV'nin
+`cv2.dnn` modülüyle çalıştırılır.
 
 ## Özellikler
 
@@ -24,6 +29,8 @@ fontlardan üretilen sentetik veriyle eğitilen bir k-NN sınıflandırıcıyla 
   durumu); ızgara bulunamazsa sebebini görmeyi sağlar
 - **Eğik, yan ya da ters çekilmiş fotoğraflar:** perspektif düzeltme ve otomatik yön bulma
 - **Yanlış cevap vermez:** okunan tahtanın tek çözümü yoksa çözüm göstermek yerine uyarır
+- **Kalemle doldurulmuş sudokuyu kontrol etme** (`kontrol.py`, `/api/kontrol`): el yazısı her
+  rakam için "doğru", "yanlış" ya da "kontrol et" der. Ağ okuduğundan emin değilse "yanlış" demez.
 - **Komut satırı ve canlı kamera modu**
 
 ## Kurulum
@@ -91,6 +98,35 @@ python cli.py --kamera          # canlı kamera (çıkış: q)
    yapıştırılmaz, kağıdı koyulaştırır (çarpma karışımı); böylece kağıdın dokusu, gölgesi ve ışığı
    korunur. Canlı kamera modunda görünürlük için yeşil dijital rakamlar kullanılır.
 
+### Kalemle doldurulmuş sudokuyu kontrol etme (`kontrol.py`)
+
+1. **El yazısı okuma:** Basılı rakamlar için kullanılan ikili maske ince el yazısını kalınlaştırıp
+   delikleri dolduruyor (8 → 1 gibi). El yazısı ağına bunun yerine gri mürekkep yoğunluğu verilir,
+   sadece rakamın kendi maskesinin çevresinden; böylece ızgara çizgisi parçaları ağa gitmez.
+   Izgara çizgisi silme de sadece hücre sınırına yakın çizgileri siler: büyük yazılmış bir 1'in
+   ya da 7'nin uzun gövdesi çizgi sanılıp silinmez.
+2. **Sinir ağı** (`egit_el_yazisi.py`): 4 evrişim katmanlı küçük bir ağ, MNIST el yazısı rakamlarıyla
+   eğitilir. Fotoğrafa benzetmek için döndürme, eğme, kalın/ince kalem, bulanıklık, soluk mürekkep ve
+   gürültü eklenir; MNIST'te az bulunan Türk/Avrupa yazımları (ortası çizgili 7, bayraklı 1) için ek
+   örnekler üretilir. Model, el yazısı eklenmiş gazete fotoğraflarıyla seçilir.
+3. **Basılı mı el yazısı mı:** Bir rakamın yazı tipine uzaklığı tek başına yetmiyor (bulanık
+   fotoğrafta basılı rakamlar da uzaklaşıyor). Bunun yerine aynı fotoğraftaki basılı rakamlara
+   *göre* uzaklık, yükseklik ve çizgi kalınlığı farkına bakan bir lojistik regresyon kullanılır.
+4. **Bulmacayı kurma:** Rakamlar en güvenilirden başlanarak ipucu yapılır: önce yazı tipi
+   okuyucusuyla el yazısı ağının aynı okuduğu rakamlar (basılı rakamları ikisi de tanır), sonra
+   basılı olma ihtimaline göre. Çelişki çıkaran rakam ipucu yapılmaz; tek çözüm bulununca durulur.
+   Böylece basılı sanılıp yanlış okunan bir el yazısı rakam bulmacayı bozmaz.
+5. **Hüküm:** Ağ çözümdeki rakama en az %10 olasılık veriyorsa "doğru"; vermiyorsa ve okuduğu
+   rakamdan en az %98 eminse "yanlış"; ikisi de değilse "kontrol et".
+
+Modeli yeniden eğitmek için (PyTorch sadece burada gerekir, ~15 dk CPU):
+
+```
+pip install -r requirements-egitim.txt
+python veri_indir.py
+python egit_el_yazisi.py
+```
+
 **Rakam tanıma verisi** (`digits.py`): Windows fontlarıyla (116 font) 1-9 rakamları çizilir.
 Döndürme, kalınlık değişimi ve düşük çözünürlük/bulanıklık ile çoğaltılarak 7162 örnek elde edilir.
 Hazır veri `digits_data.npz` dosyasında gelir. Yeniden üretmek için `python digits.py` (Windows gerekir).
@@ -123,6 +159,32 @@ python benchmark.py veri/dogrulama
 Fotoğraflar Baptiste Wicht ve Jean Hennebert'in veri setinden alınmıştır ve
 [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/) lisanslıdır.
 
+### Kalemle doldurulmuş sudoku kontrolü
+
+Aynı gazete fotoğraflarının, boş hücrelerine sonradan el yazısı eklenmiş halleriyle
+(`veri/karisik/`) ve 5 gerçek tükenmez kalem fotoğrafıyla (`veri/dogal/`) ölçülmüştür:
+
+| | Geliştirme (40) | Doğrulama (40) | Gerçek kalem (5) |
+|---|---|---|---|
+| Bulmaca doğru çözüldü | 39 | 40 | 5 |
+| Yanlış çözüm | 1 | 0 | 0 |
+| El yazısı rakam | 1983 | 2073 | 205 |
+| → "doğru" | 1963 | 2047 | 200 |
+| → "kontrol et" | 14 | 23 | 4 |
+| → **doğru yazılmışa "yanlış" (yanlış alarm)** | **6** | **3** | **1** |
+
+Yanlış yazılmış rakam benzetimiyle (fotoğraf başına 3 rakam), yanlışların yaklaşık %90'ı "yanlış",
+%6-7'si "kontrol et" olarak işaretlendi.
+
+Dürüst notlar: Bulmacayı kurma sırası doğrulama setindeki hatalara bakılarak düzeltildi; o set
+artık tamamen "görülmemiş" sayılmaz. Gerçek kalem seti sadece 5 fotoğraf ve ayarlarda kullanıldı.
+Geliştirme setindeki tek yanlış çözümde, el yazısı bir rakamı iki okuyucu da %99 güvenle yanlış okuyor.
+
+```
+python benchmark.py veri/karisik/dogrulama --kontrol
+python benchmark.py veri/dogal --kontrol
+```
+
 Kendi fotoğraf setinle de ölçebilirsin: her `foto.jpg` dosyasının yanında doğru cevabı içeren bir
 `foto.dat` olmalı (2 satır başlık ve ardından 9 satır rakam).
 
@@ -132,7 +194,8 @@ Kendi fotoğraf setinle de ölçebilirsin: her `foto.jpg` dosyasının yanında 
 python -m pytest
 ```
 
-Çözücü, sentetik eğik fotoğraflar, gerçek ekran görüntüleri ve web API'si test edilir. Tarayıcı
+Çözücü, sentetik eğik fotoğraflar, gerçek ekran görüntüleri, kalemle doldurulmuş sayfa kontrolü
+ve web API'si test edilir. Tarayıcı
 testleri (`tests/test_browser.py`) arayüzü gerçek bir tarayıcıda uçtan uca dener: görsel yükleme,
 düzeltme modu, ok tuşları, telefon görünümü, hata durumları. Kurulu Microsoft Edge'i kullanır;
 Edge yoksa `python -m playwright install chromium` gerekir. Playwright kurulu değilse bu testler atlanır.
@@ -149,6 +212,8 @@ adimlar.py        "Nasıl gördüm?" paneli için açıklamalı ara görseller
 kalite.py         fotoğraf kalite kontrolü (bulanıklık, ızgara boyutu, karanlık, parlama)
 fonts/            el yazısı yazı tipi Caveat (SIL Open Font License, fonts/OFL.txt)
 digits.py         sentetik veri üretimi ve k-NN rakam tanıma
+kontrol.py        kalemle doldurulmuş sudokuyu kontrol etme
+egit_el_yazisi.py el yazısı ağını eğitir (el_yazisi.onnx, el_yazisi_tur.json)
 solver.py         sudoku çözücü (deneme yanılma, tek çözüm doğrulaması)
 ipucu.py          insan gibi çözen çözücü: ipuçları ve zorluk derecesi
 benchmark.py      gerçek fotoğraflarda doğruluk ölçümü
@@ -158,6 +223,7 @@ tests/            otomatik testler
 
 ## Sınırlamalar
 
-- Yalnızca basılı rakamları okur; elle yazılmış rakamları tanımaz.
+- Çözme modu yalnızca basılı rakamları okur; el yazısı sadece kontrol modunda okunur.
+- El yazısı kontrolü az sayıda gerçek kalem fotoğrafıyla denendi; farklı el yazılarında doğruluk değişebilir.
 - Çok kıvrık sayfalarda ızgara düz bir dörtgen olmadığı için kenardaki hücreler kayabilir.
 - Rakam veri setini yeniden üretmek Windows fontları gerektirir (hazır veri her sistemde çalışır).
