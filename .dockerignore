@@ -1,0 +1,7 @@
+# Derleme bağlamını küçük tut: imaja sadece Dockerfile'daki COPY satırları girer
+.git
+veri
+frontend/node_modules
+**/__pycache__
+.pytest_cache
+CLAUDE.md

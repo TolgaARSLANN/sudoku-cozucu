@@ -84,6 +84,17 @@ python cli.py *.jpg --gosterme  # toplu çözüm, pencere açmadan
 python cli.py --kamera          # canlı kamera (çıkış: q)
 ```
 
+**Docker ile (Linux sunucu, Hugging Face Spaces):**
+
+```
+docker build -t sudoku-cozucu .
+docker run -p 7860:7860 sudoku-cozucu      # http://127.0.0.1:7860
+```
+
+İmaja sadece çalışmak için gereken dosyalar girer; uygulama root olmayan bir kullanıcıyla, gunicorn
+ile çalışır (`gunicorn.conf.py`). Hugging Face Space'inin tanıtım kartı `space/README.md` dosyasındadır;
+yüklerken Space'e README olarak gönderilir.
+
 ## Nasıl çalışır?
 
 1. **Izgarayı bulma** (`vision.find_grid`): Görüntü uyarlamalı eşiklemeyle siyah-beyaza çevrilir,
@@ -254,6 +265,8 @@ Edge yoksa `python -m playwright install chromium` gerekir. Playwright kurulu de
 ```
 app.py            web sunucusu (Flask)
 gunicorn.conf.py  Linux sunucu ayarları (işçi sayısı, zaman aşımı, IP'siz erişim kaydı)
+Dockerfile        Linux sunucu imajı (Hugging Face Spaces)
+space/            Hugging Face Space tanıtım kartı
 frontend/         web arayüzünün kaynak kodu (React + TypeScript + Vite)
 static/           derlenmiş arayüz (npm run build çıktısı)
 cli.py            komut satırı ve kamera modu
