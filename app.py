@@ -40,19 +40,29 @@ reader = HandwritingReader()
 MAX_PIXELS = 50_000_000  # ~50 megapiksel: güncel telefon fotoğrafları sığar
 
 
-def too_many_pixels(data):
-    """Görseli açmadan, sadece dosya başlığından boyutuna bakar.
+# Sadece bu biçimler OpenCV'ye verilir. Başka biçimlerde (ör. HDR) OpenCV veriyi çözmek için diske geçici
+# dosya olarak yazıyor ve Pillow'un tanımadığı biçimlerde aşağıdaki boyut kontrolü atlanabiliyordu.
+ALLOWED_FORMATS = {"JPEG", "MPO", "PNG", "WEBP"}  # MPO: bazı telefonların çok görüntülü JPEG'i
+UNREADABLE = "Bu dosya görsel olarak okunamadı. JPG, PNG ya da WEBP deneyin."
+
+
+def check_header(data):
+    """Görseli açmadan, sadece dosya başlığından biçimine ve boyutuna bakar. Döner: (hata, kod) ya da None.
 
     Dosya boyutu sınırı yetmez: tek renkli bir PNG birkaç yüz KB olup açılınca belleği doldurabilir.
     """
+    too_big = (f"Görselin çözünürlüğü çok yüksek (en fazla {MAX_PIXELS // 1_000_000} megapiksel). "
+               "Daha küçük bir görsel dene.", 413)
     try:
         with Image.open(BytesIO(data)) as im:
-            width, height = im.size
+            fmt, (width, height) = im.format, im.size
     except Image.DecompressionBombError:
-        return True
+        return too_big
     except OSError:
-        return False  # görsel değilse aşağıdaki çözümleme zaten reddeder
-    return width * height > MAX_PIXELS
+        return UNREADABLE, 400
+    if fmt not in ALLOWED_FORMATS:
+        return UNREADABLE, 400
+    return too_big if width * height > MAX_PIXELS else None
 
 
 def read_upload():
@@ -61,12 +71,13 @@ def read_upload():
     if file is None:
         return None, (jsonify(hata="Görsel gönderilmedi."), 400)
     data = file.read()
-    if too_many_pixels(data):
-        return None, (jsonify(hata=f"Görselin çözünürlüğü çok yüksek (en fazla {MAX_PIXELS // 1_000_000} "
-                                   "megapiksel). Daha küçük bir görsel dene."), 413)
+    problem = check_header(data)
+    if problem:
+        message, code = problem
+        return None, (jsonify(hata=message), code)
     img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
     if img is None:
-        return None, (jsonify(hata="Bu dosya görsel olarak okunamadı. JPG ya da PNG deneyin."), 400)
+        return None, (jsonify(hata=UNREADABLE), 400)
     # Düzeltme sonrası çizimde de aynı küçültme: istemcinin geri gönderdiği köşeler bu boyuta göre
     return limit_size(img), None
 
@@ -87,6 +98,23 @@ def parse_corners(text):
     except (TypeError, ValueError):
         return None
     return corners if corners.shape == (4, 2) and np.isfinite(corners).all() else None
+
+
+# Sayfa sadece kendi dosyalarını yükler ve çalıştırır (yazı tipleri dahil). data: ve blob: yüklenen ve işlenen
+# görseller için. Çerçeve içinde sadece bu site ve Hugging Face (Space sayfası uygulamayı iframe'de gösterir).
+SECURITY_HEADERS = {
+    "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; "
+                               "img-src 'self' data: blob:; connect-src 'self' data:; object-src 'none'; "
+                               "base-uri 'none'; form-action 'self'; frame-ancestors 'self' https://huggingface.co",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "no-referrer",
+}
+
+
+@app.after_request
+def add_security_headers(response):
+    response.headers.update(SECURITY_HEADERS)
+    return response
 
 
 @app.get("/")
@@ -136,7 +164,7 @@ def solve_board():
     except ValueError:
         board = None
     if not (isinstance(board, list) and len(board) == 81
-            and all(isinstance(v, int) and 0 <= v <= 9 for v in board)):
+            and all(type(v) is int and 0 <= v <= 9 for v in board)):  # JSON true/false rakam sayılmasın
         return jsonify(hata="Geçersiz tahta."), 400
     solution = solve_unique(board)
     if not solution:
@@ -152,7 +180,9 @@ def solve_board():
         if error:
             return error
         corners = parse_corners(request.form.get("koseler"))
-        if corners is None:
+        h, w = img.shape[:2]
+        # Köşeleri sunucu kendisi buldu, hep görselin içindedir; değilse istek elle değiştirilmiştir
+        if corners is None or corners.min() < 0 or corners[:, 0].max() > w or corners[:, 1].max() > h:
             return jsonify(hata="Izgaranın köşe bilgisi geçersiz."), 400
         draw_handwritten(img, corners, board, solution)
         image = encode_image(img)

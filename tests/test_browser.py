@@ -51,9 +51,12 @@ def browser():
         b.close()
 
 
-def open_page(browser, server, *, mobile=False):
+def open_page(browser, server, *, mobile=False, csp=False):
     width, height = (375, 812) if mobile else (1280, 900)
-    context = browser.new_context(viewport={"width": width, "height": height}, has_touch=mobile, is_mobile=mobile)
+    # Playwright'ın wait_for_function'ı tarayıcıda eval kullanır; sunucunun güvenlik başlığı (CSP) bunu engeller.
+    # CSP'nin kendisi test_no_content_security_policy_violations'da açıkken denenir.
+    context = browser.new_context(viewport={"width": width, "height": height}, has_touch=mobile, is_mobile=mobile,
+                                  bypass_csp=not csp)
     page = context.new_page()
     page.errors = []
     page.on("pageerror", lambda e: page.errors.append(str(e)))
@@ -339,4 +342,26 @@ def test_share_button(browser, server, supported):
         shared = page.evaluate("window.__shared")
         assert len(shared) == 1 and shared[0][0][:2] == ["sudoku_cozum.jpg", "image/jpeg"] and shared[0][0][2] > 1000
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth"), "yatay kaydırma var"
+    page.context.close()
+
+
+def test_no_content_security_policy_violations(browser, server):
+    # Güvenlik başlığı (CSP) arayüzün hiçbir parçasını engellememeli: tüm akışlar gezilir
+    page = open_page(browser, server, mobile=True, csp=True)
+    page.add_init_script(FAKE_SHARE % "true")
+    blocked = []
+    page.on("console", lambda m: blocked.append(m.text) if "Content Security Policy" in m.text else None)
+    page.reload()
+    page.click("#examples button:has-text('Gazete')")
+    page.wait_for_selector("#share")
+    page.click("#share")
+    assert page.evaluate("window.__shared.length") == 1  # data: adresinden dosyaya çevrilip paylaşıldı
+    page.click("#mode-hints")  # yüklenen fotoğraf blob: adresinden gösterilir
+    page.wait_for_selector("#photo[src^='blob:']")
+    page.click("#steps summary")
+    page.goto(server)
+    page.click("#examples button:has-text('Kalemle')")
+    page.wait_for_selector("#result")
+    page.evaluate("document.fonts.ready")
+    assert blocked == [], blocked
     page.context.close()

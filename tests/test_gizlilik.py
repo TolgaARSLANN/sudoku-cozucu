@@ -4,11 +4,14 @@
 - Python denetim kancası (audit hook): Python üzerinden yapılan her yazma amaçlı dosya açma, geçici dosya
   ve klasör oluşturma, taşıma, silme yakalanır.
 - Proje klasörünün öncesi/sonrası karşılaştırması: OpenCV gibi C kodunun yazdıkları da görülür.
+- Sistem geçici klasöründe OpenCV'nin geçici dosyaları (ocv*): bazı biçimleri (ör. HDR) çözerken
+  veriyi oraya yazıyor ve hata olunca silmeden bırakabiliyor.
 """
 import io
 import json
 import os
 import sys
+import tempfile
 from pathlib import Path
 
 import cv2
@@ -44,8 +47,10 @@ sys.addaudithook(_hook)  # kanca kaldırılamaz; kayıt dışında hiçbir şey 
 
 
 def snapshot():
-    return {p: p.stat().st_mtime_ns for p in ROOT.rglob("*")
-            if p.is_file() and not ({".git", "node_modules", "veri", "__pycache__"} & set(p.parts))}
+    files = {p: p.stat().st_mtime_ns for p in ROOT.rglob("*")
+             if p.is_file() and not ({".git", "node_modules", "veri", "__pycache__"} & set(p.parts))}
+    files.update({p: p.stat().st_mtime_ns for p in Path(tempfile.gettempdir()).glob("ocv*")})
+    return files
 
 
 @pytest.fixture
@@ -57,7 +62,7 @@ def disk_writes():
     _recording = None
     after = snapshot()
     changed = [p for p in after if before.get(p) != after[p]]
-    assert changed == [], f"Proje klasöründe değişen dosyalar: {changed}"
+    assert changed == [], f"Diskte değişen dosyalar: {changed}"
 
 
 def big_photo():
@@ -87,6 +92,16 @@ def test_no_disk_writes_while_processing_uploads(disk_writes):
     assert post(client, "/api/kontrol", {"gorsel": ((IMAGES / "kalem.jpg").read_bytes(), "k.jpg")}
                 ).get_json()["durum"] == "kontrol_edildi"
     assert disk_writes == [], f"Diske yazma girişimi: {disk_writes}"
+
+
+# OpenCV'nin çözebildiği ama bellekte çözemediği bir biçim: Radiance HDR (küçük, geçerli bir görsel)
+HDR = cv2.imencode(".hdr", load_image(str(IMAGES / "ekran_1.jpg")).astype("float32") / 255)[1].tobytes()
+
+
+def test_unsupported_formats_never_reach_disk(disk_writes):
+    res = post(app.test_client(), "/api/coz", {"gorsel": (HDR, "foto.hdr")})
+    assert res.status_code == 400  # sadece JPG, PNG, WEBP; diğerleri OpenCV'ye hiç verilmez
+    assert disk_writes == []
 
 
 def test_hook_catches_temporary_files(disk_writes):

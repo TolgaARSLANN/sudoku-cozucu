@@ -210,6 +210,18 @@ altyapısı (Werkzeug) 500 KB'tan büyük yüklemeleri normalde geçici dosyaya 
 her dosya yazma ve geçici dosya girişimini yakalar, proje klasörünü de işlem öncesi ve sonrası karşılaştırır.
 Sunucu kaydına sadece zaman, adres, sonuç ve süre yazılır; IP adresi ve görsel yazılmaz.
 
+## Güvenlik
+
+- Sadece JPG, PNG ve WEBP kabul edilir; biçim ve çözünürlük (en fazla 50 megapiksel) görsel açılmadan,
+  dosya başlığından kontrol edilir. OpenCV bazı biçimleri (ör. HDR) çözmek için veriyi diske geçici dosya
+  olarak yazıyor; bu biçimler OpenCV'ye hiç verilmez. Yükleme en fazla 20 MB.
+- Kullanıcının gönderdiği tahta ve ızgara köşeleri doğrulanır; görselin dışındaki köşeler reddedilir.
+  Çözücüde adım sınırı vardır: en zor bilinen bulmacalar da 1 saniyenin altında yanıtlanır.
+- Tarayıcı güvenlik başlıkları: sayfa sadece kendi dosyalarını yükler ve çalıştırır (Content-Security-Policy),
+  başka sitelere adres bilgisi gönderilmez, sadece bu site ve Hugging Face sayfayı çerçeve içinde gösterebilir.
+- Beklenmeyen hatalarda kullanıcıya iç ayrıntı gösterilmez; sadece `static/` klasörü dışarıya açıktır.
+- Bağımlılıklarda bilinen açık yok (`pip-audit`, `npm audit`; 2026-10-17). Sürümler sabit.
+
 ## Lisans ve atıflar
 
 Projenin kodu [MIT lisansı](LICENSE) ile yayınlanmıştır. Projeyle gelen diğer parçaların kendi lisansları vardır:

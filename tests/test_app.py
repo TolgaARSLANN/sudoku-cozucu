@@ -202,3 +202,43 @@ def test_unexpected_error_is_turkish_json_and_logs_no_image(client, monkeypatch,
 def test_known_http_errors_keep_their_answers(client):
     assert client.get("/yok").status_code == 404
     assert client.post("/api/coz").status_code == 400
+
+
+@pytest.mark.parametrize("ext, accepted", [(".jpg", True), (".png", True), (".webp", True), (".bmp", False),
+                                           (".tiff", False), (".hdr", False)])
+def test_only_known_formats_reach_opencv(client, ext, accepted):
+    # Bilinmeyen biçimler OpenCV'ye hiç verilmez: bazılarını diske geçici dosya yazarak çözüyor
+    img = load_image(str(IMAGES / "ekran_1.jpg"))
+    data = cv2.imencode(ext, img.astype(np.float32) / 255 if ext == ".hdr" else img)[1].tobytes()
+    res = post(client, data, "foto" + ext)
+    if accepted:
+        assert res.get_json()["durum"] == "cozuldu"
+    else:
+        assert res.status_code == 400 and "JPG, PNG ya da WEBP" in res.get_json()["hata"]
+
+
+@pytest.mark.parametrize("corners", [
+    [[0, 0], [1e30, 0], [1e30, 1e30], [0, 1e30]],              # aşırı büyük: işlemci ve bellek yakmasın
+    [[-5000, -5000], [-10, -5000], [-10, -10], [-5000, -10]],  # görselin dışında
+])
+def test_rejects_corners_outside_image(client, corners):
+    photo = (IMAGES / "ekran_1.jpg").read_bytes()  # 360x360
+    res = post_board(client, PUZZLE, photo, corners)
+    assert res.status_code == 400 and "köşe" in res.get_json()["hata"]
+
+
+def test_rejects_booleans_as_digits(client):
+    board = [int(c) for c in PUZZLE]
+    assert post_board(client, [True] + board[1:]).status_code == 400  # JSON true, 1 sayılmamalı
+
+
+def test_security_headers(client):
+    for res in (client.get("/"), post(client, (IMAGES / "ekran_1.jpg").read_bytes())):
+        assert "script-src 'self'" in res.headers["Content-Security-Policy"]
+        assert res.headers["X-Content-Type-Options"] == "nosniff"
+
+
+@pytest.mark.parametrize("url", ["/static/../app.py", "/static/..%2fapp.py", "/static/%2e%2e/app.py", "/app.py",
+                                 "/el_yazisi.onnx", "/tests/images/kalem.jpg", "/.git/config"])
+def test_only_static_files_are_served(client, url):
+    assert client.get(url).status_code == 404  # kod, model, testler ve git dışarıdan okunamaz
