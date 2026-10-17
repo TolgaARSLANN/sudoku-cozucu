@@ -271,6 +271,28 @@ def draw_solution(frame, corners, board, solution):
                        cv2.multiply(green, alpha, scale=1 / 255))
 
 
+def grid_cell_size(corners):
+    """Fotoğrafa çizimde hücre boyu: ızgaranın fotoğraftaki gerçek boyutu (çok küçük ve çok büyükte sınırlı)."""
+    side = np.mean([np.linalg.norm(corners[i] - corners[(i + 1) % 4]) for i in range(4)])
+    return int(np.clip(side, 270, 1350)) // 9
+
+
+def grid_overlay(frame, corners, mask):
+    """Düz kare tuvaldeki maskeyi ızgaranın fotoğraftaki perspektifine çevirir.
+
+    Sadece ızgaranın kapladığı bölgede çalışır: tüm fotoğrafta karıştırma gereksiz yere yavaş.
+    Döner: (fotoğrafın ızgara bölgesi, yerinde değiştirilebilir; aynı boyutta 0-1 arası alfa)
+    """
+    size = mask.shape[0]
+    h, w = frame.shape[:2]
+    bx, by, bw, bh = cv2.boundingRect(corners.astype(np.int32))
+    x0, y0, x1, y1 = max(bx, 0), max(by, 0), min(bx + bw + 1, w), min(by + bh + 1, h)
+    square = np.float32([[0, 0], [size, 0], [size, size], [0, size]])
+    to_roi = cv2.getPerspectiveTransform(square, corners - np.float32([x0, y0]))
+    alpha = cv2.warpPerspective(mask, to_roi, (x1 - x0, y1 - y0))[..., None].astype(np.float32) / 255
+    return frame[y0:y1, x0:x1], alpha
+
+
 HAND_FONT = (Path(__file__).parent / "fonts" / "Caveat.ttf").read_bytes()  # el yazısı, SIL OFL; bir kez okunur
 INK = np.float32([150, 60, 25]) / 255  # BGR: tükenmez kalem mavisi
 
@@ -283,8 +305,7 @@ def draw_handwritten(frame, corners, board, solution):
       sabittir: aynı tahta hep aynı görünür.
     - Mürekkep kağıdın üstüne boyanmaz, kağıdı koyulaştırır (çarpma karışımı); gölge ve ışık korunur.
     """
-    side = np.mean([np.linalg.norm(corners[i] - corners[(i + 1) % 4]) for i in range(4)])
-    cell = int(np.clip(side, 270, 1350)) // 9
+    cell = grid_cell_size(corners)
     size = cell * 9
     mask = np.zeros((size, size), np.uint8)
     for i in range(81):
@@ -305,14 +326,7 @@ def draw_handwritten(frame, corners, board, solution):
         x0, y0, x1, y1 = max(x, 0), max(y, 0), min(x + 2 * cell, size), min(y + 2 * cell, size)
         np.maximum(mask[y0:y1, x0:x1], glyph[y0 - y:y1 - y, x0 - x:x1 - x], out=mask[y0:y1, x0:x1])
     mask = cv2.GaussianBlur(mask, (0, 0), max(0.5, cell / 70))  # mürekkebin kağıda hafif yayılması
-    # Sadece ızgaranın kapladığı bölgede çalış: tüm fotoğrafta karıştırma gereksiz yere yavaş
-    h, w = frame.shape[:2]
-    bx, by, bw, bh = cv2.boundingRect(corners.astype(np.int32))
-    x0, y0, x1, y1 = max(bx, 0), max(by, 0), min(bx + bw + 1, w), min(by + bh + 1, h)
-    square = np.float32([[0, 0], [size, 0], [size, size], [0, size]])
-    to_roi = cv2.getPerspectiveTransform(square, corners - np.float32([x0, y0]))
-    alpha = cv2.warpPerspective(mask, to_roi, (x1 - x0, y1 - y0))[..., None].astype(np.float32) / 255
-    roi = frame[y0:y1, x0:x1]
+    roi, alpha = grid_overlay(frame, corners, mask)
     roi[:] = (roi * (1 - alpha * (1 - INK))).astype(np.uint8)
 
 

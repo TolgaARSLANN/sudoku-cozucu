@@ -55,7 +55,8 @@ def solve_files(paths, clf, show_window):
         if img is None:
             print(f"\n{path.name}: görüntü okunamadı.")
             continue
-        result = solve_image(limit_size(img), clf)
+        img = limit_size(img)  # kalite kontrolü de aynı (küçültülmüş) görselle ve köşelerle çalışsın
+        result = solve_image(img, clf)
         print(f"\n{path.name}: {MESSAGES[result.status]}")
         if result.solution:
             print(f"  Zorluk: {explain(result.board)['zorluk']}")

@@ -20,6 +20,7 @@ from kontrol import HandwritingReader, check_image
 from solver import solve, solve_unique
 from vision import MESSAGES, draw_handwritten, limit_size, solve_image
 
+
 class MemoryRequest(Request):
     """Yüklenen görsel hiçbir zaman diske yazılmaz.
 

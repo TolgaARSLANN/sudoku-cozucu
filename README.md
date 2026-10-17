@@ -133,7 +133,7 @@ python cli.py --kamera          # canlı kamera (çıkış: q)
 5. **Hüküm:** Ağ çözümdeki rakama en az %10 olasılık veriyorsa "doğru"; vermiyorsa ve okuduğu
    rakamdan en az %98 eminse "yanlış"; ikisi de değilse "kontrol et".
 
-Modeli yeniden eğitmek için (PyTorch sadece burada gerekir, ~15 dk CPU):
+Modeli yeniden eğitmek için (PyTorch sadece burada gerekir, ~20 dk CPU):
 
 ```
 pip install -r requirements-egitim.txt
@@ -229,10 +229,12 @@ Projenin kodu [MIT lisansı](LICENSE) ile yayınlanmıştır. Projeyle gelen di�
 python -m pytest
 ```
 
-Çözücü, sentetik eğik fotoğraflar, gerçek ekran görüntüleri, kalemle doldurulmuş sayfa kontrolü
-ve web API'si test edilir. Tarayıcı
-testleri (`tests/test_browser.py`) arayüzü gerçek bir tarayıcıda uçtan uca dener: görsel yükleme,
-düzeltme modu, ok tuşları, telefon görünümü, hata durumları. Kurulu Microsoft Edge'i kullanır;
+Çözücü, sentetik eğik fotoğraflar, site ekran görüntülerine benzeyen sentetik görseller
+(`tests/images/uret.py`), gerçek bir kalem fotoğrafıyla kontrol modu, web API'si, komut satırı ve
+gizlilik (yüklenen görselin diske yazılmadığı) test edilir. Tarayıcı testleri (`tests/test_browser.py`)
+arayüzü gerçek bir tarayıcıda uçtan uca dener: görsel yükleme, düzeltme ve ipucu modları, kontrol modu,
+örnek görseller, paylaşma, telefon görünümü, hata durumları ve sayfanın başka sunuculara istek
+göndermediği. Kurulu Microsoft Edge'i kullanır;
 Edge yoksa `python -m playwright install chromium` gerekir. Playwright kurulu değilse bu testler atlanır.
 
 ## Proje yapısı

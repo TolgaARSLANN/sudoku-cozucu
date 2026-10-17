@@ -16,7 +16,7 @@ import numpy as np
 
 from digits import normalize
 from solver import solve, solve_unique
-from vision import SQUARE, WARP, find_digits, find_grid, read_board_any_rotation
+from vision import SQUARE, WARP, find_digits, find_grid, grid_cell_size, grid_overlay, read_board_any_rotation
 
 HERE = Path(__file__).parent
 MODEL_FILE = HERE / "el_yazisi.onnx"
@@ -192,16 +192,8 @@ MARK_COLORS = {"yanlis": (40, 40, 210), "kontrol": (0, 140, 245)}  # BGR: kırm�
 
 def draw_marks(frame, corners, verdicts):
     """Yanlış rakamların etrafına kırmızı, emin olunmayanlara turuncu kalem halkası çizer."""
-    side = np.mean([np.linalg.norm(corners[i] - corners[(i + 1) % 4]) for i in range(4)])
-    cell = int(np.clip(side, 270, 1350)) // 9  # halka ızgaranın fotoğraftaki boyutunda çizilir
+    cell = grid_cell_size(corners)  # halka ızgaranın fotoğraftaki boyutunda çizilir
     size = cell * 9
-    # Sadece ızgaranın kapladığı bölgede çalış: tüm fotoğrafta karıştırma gereksiz yere yavaş
-    h, w = frame.shape[:2]
-    bx, by, bw, bh = cv2.boundingRect(corners.astype(np.int32))
-    x0, y0, x1, y1 = max(bx, 0), max(by, 0), min(bx + bw + 1, w), min(by + bh + 1, h)
-    square = np.float32([[0, 0], [size, 0], [size, size], [0, size]])
-    to_roi = cv2.getPerspectiveTransform(square, corners - np.float32([x0, y0]))
-    roi = frame[y0:y1, x0:x1]
     for kind, color in MARK_COLORS.items():
         mask = np.zeros((size, size), np.uint8)
         for i, v in verdicts.items():
@@ -211,7 +203,7 @@ def draw_marks(frame, corners, verdicts):
                 cv2.ellipse(mask, center, (int(cell * 0.44), int(cell * 0.4)), -8, 20, 375, 255,
                             max(2, cell // 14), cv2.LINE_AA)  # biraz eğik, ucu üst üste binen halka
         if mask.any():
-            alpha = cv2.warpPerspective(mask, to_roi, (x1 - x0, y1 - y0))[..., None].astype(np.float32) / 255
+            roi, alpha = grid_overlay(frame, corners, mask)
             roi[:] = (roi * (1 - alpha) + np.float32(color) * alpha).astype(np.uint8)
 
 

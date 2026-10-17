@@ -66,7 +66,8 @@ def build_steps(img, trace, result):
     for x, y, w, h in trace["boxes"]:
         cv2.rectangle(ink, (x - 2, y - 2), (x + w + 2, y + h + 2), GREEN, 2)
     steps.append(("Izgara çizgileri silindi",
-                  "Hücre boyunda düz çizgiler silindi; hiçbir rakamda bu kadar uzun düz çizgi yoktur. "
+                  "Hücre sınırlarının üstündeki, hücre boyunda düz çizgiler silindi. Hücrenin ortasındaki uzun "
+                  "çizgiler korunur: büyük yazılmış bir 1'in ya da 7'nin gövdesi olabilir. "
                   f"Kalan parçalardan rakam boyutunda olan {len(trace['boxes'])} tanesi bulundu (yeşil kutular).",
                   ink))
 

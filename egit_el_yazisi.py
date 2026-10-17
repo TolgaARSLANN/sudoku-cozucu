@@ -4,7 +4,7 @@ Sadece eğitim için PyTorch gerekir; uygulama modeli cv2.dnn ile çalıştırı
 
     pip install -r requirements-egitim.txt
     python veri_indir.py               # ölçüm fotoğrafları (model seçimi geliştirme setiyle yapılır)
-    python egit_el_yazisi.py           # ~15 dk (CPU)
+    python egit_el_yazisi.py           # ~20 dk (CPU)
 
 Üretir: el_yazisi.onnx, el_yazisi_tur.json
 """

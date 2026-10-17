@@ -7,7 +7,7 @@ belirlemiyor (eski telefonların çözülen fotoğrafları da bulanık), bu yüz
 import cv2
 import numpy as np
 
-from vision import SQUARE, WARP
+from vision import warp_grid
 
 MIN_SHARPNESS = 60    # Laplace varyansı; çözülemeyen bulanık fotoğraflar 5–54, diğer başarısızlar 100+
 MIN_GRID_SIDE = 250   # piksel; ölçüm setindeki en küçük ızgara 325 px
@@ -28,7 +28,7 @@ def check_quality(img, corners=None):
     """Olası sorunların listesi: ["bulanik", ...]. Izgara bulunduysa sadece ızgaraya bakılır."""
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     if corners is not None:
-        region = cv2.warpPerspective(gray, cv2.getPerspectiveTransform(corners, SQUARE), (WARP, WARP))
+        region = warp_grid(gray, corners)
         side = np.mean([np.linalg.norm(corners[i] - corners[(i + 1) % 4]) for i in range(4)])
     else:  # ızgara yoksa tüm fotoğraf, sabit genişlikte (keskinlik çözünürlüğe bağlı)
         region = cv2.resize(gray, None, fx=640 / gray.shape[1], fy=640 / gray.shape[1],
