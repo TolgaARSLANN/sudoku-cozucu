@@ -1,7 +1,7 @@
 # Sudoku Çözücü
 
 Sudokunun fotoğrafını ya da ekran görüntüsünü ver; program ızgarayı bulur, rakamları okur,
-bulmacayı çözer ve çözümü **fotoğrafın üstüne, perspektife uygun şekilde** çizer.
+bulmacayı çözer ve çözümü **fotoğrafın üstüne, kağıda kalemle yazılmış gibi** çizer.
 
 Derin öğrenme kütüphanesi kullanmaz: görüntü işleme OpenCV ile, rakam tanıma ise bilgisayardaki
 fontlardan üretilen sentetik veriyle eğitilen bir k-NN sınıflandırıcıyla yapılır.
@@ -81,8 +81,11 @@ python cli.py --kamera          # canlı kamera (çıkış: q)
    başlayarak denenir. Bir değişiklik ancak bulmacayı tek çözümlü yapıyorsa kabul edilir.
    Emin okunmuş rakamlara hiç dokunulmaz: birden çok hata varken onları değiştirmek tutarlı ama
    yanlış bir tahta üretebiliyor.
-6. **Geri yansıtma:** Çözüm düz karenin üstüne çizilir ve ters perspektif dönüşümüyle orijinal
-   fotoğrafa yerleştirilir.
+6. **Geri yansıtma** (`vision.draw_handwritten`): Çözüm el yazısı bir yazı tipiyle, ızgaranın
+   fotoğraftaki gerçek boyutunda çizilir ve ters perspektif dönüşümüyle fotoğrafa yerleştirilir.
+   Her rakam biraz farklı açı, boyut ve kalem baskısıyla yazılır. Mürekkep kağıdın üstüne
+   yapıştırılmaz, kağıdı koyulaştırır (çarpma karışımı); böylece kağıdın dokusu, gölgesi ve ışığı
+   korunur. Canlı kamera modunda görünürlük için yeşil dijital rakamlar kullanılır.
 
 **Rakam tanıma verisi** (`digits.py`): Windows fontlarıyla (116 font) 1-9 rakamları çizilir.
 Döndürme, kalınlık değişimi ve düşük çözünürlük/bulanıklık ile çoğaltılarak 7162 örnek elde edilir.
@@ -140,6 +143,7 @@ cli.py            komut satırı ve kamera modu
 vision.py         ızgara bulma, rakam okuma, çözümü çizme
 adimlar.py        "Nasıl gördüm?" paneli için açıklamalı ara görseller
 kalite.py         fotoğraf kalite kontrolü (bulanıklık, ızgara boyutu, karanlık, parlama)
+fonts/            el yazısı yazı tipi Caveat (SIL Open Font License, fonts/OFL.txt)
 digits.py         sentetik veri üretimi ve k-NN rakam tanıma
 solver.py         sudoku çözücü
 benchmark.py      gerçek fotoğraflarda doğruluk ölçümü

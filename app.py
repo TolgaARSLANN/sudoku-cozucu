@@ -15,7 +15,7 @@ from adimlar import build_steps
 from digits import DigitClassifier
 from kalite import WARNINGS, check_quality
 from solver import solve, solve_unique
-from vision import MESSAGES, draw_outline, draw_solution, solve_image
+from vision import MESSAGES, draw_handwritten, solve_image
 
 app = Flask(__name__, static_folder="static")
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024
@@ -133,8 +133,7 @@ def solve_board():
         corners = parse_corners(request.form.get("koseler"))
         if corners is None:
             return jsonify(hata="Izgaranın köşe bilgisi geçersiz."), 400
-        draw_outline(img, corners, solved=True)
-        draw_solution(img, corners, board, solution)
+        draw_handwritten(img, corners, board, solution)
         image = encode_image(img)
     return jsonify(durum="cozuldu", mesaj="Çözüldü.", cozum=solution, gorsel=image)
 

@@ -1,9 +1,12 @@
 """Görüntü işleme: ızgarayı bul, rakamları oku, çözümü görüntünün üstüne çiz."""
 from dataclasses import dataclass, field
+from io import BytesIO
 from itertools import combinations
+from pathlib import Path
 
 import cv2
 import numpy as np
+from PIL import Image, ImageDraw, ImageFont
 
 from digits import normalize
 from solver import solve_unique
@@ -244,6 +247,51 @@ def draw_solution(frame, corners, board, solution):
                        cv2.multiply(green, alpha, scale=1 / 255))
 
 
+HAND_FONT = (Path(__file__).parent / "fonts" / "Caveat.ttf").read_bytes()  # el yazısı, SIL OFL; bir kez okunur
+INK = np.float32([150, 60, 25]) / 255  # BGR: tükenmez kalem mavisi
+
+
+def draw_handwritten(frame, corners, board, solution):
+    """Çözümü kağıda kalemle yazılmış gibi çizer.
+
+    - Rakamlar ızgaranın fotoğraftaki gerçek boyutunda çizilir; bulanık fotoğrafa keskin rakam yapışmaz.
+    - Her rakam biraz farklı açı, boyut, konum ve kalem baskısıyla yazılır. Rastgelelik hücreye göre
+      sabittir: aynı tahta hep aynı görünür.
+    - Mürekkep kağıdın üstüne boyanmaz, kağıdı koyulaştırır (çarpma karışımı); gölge ve ışık korunur.
+    """
+    side = np.mean([np.linalg.norm(corners[i] - corners[(i + 1) % 4]) for i in range(4)])
+    cell = int(np.clip(side, 270, 1350)) // 9
+    size = cell * 9
+    mask = np.zeros((size, size), np.uint8)
+    for i in range(81):
+        if board[i]:
+            continue
+        rng = np.random.default_rng(i)
+        font = ImageFont.truetype(BytesIO(HAND_FONT), int(cell * rng.uniform(0.85, 0.98)))
+        font.set_variation_by_axes([rng.uniform(450, 650)])  # kalem baskısı / çizgi kalınlığı
+        glyph = Image.new("L", (cell * 2, cell * 2), 0)
+        ImageDraw.Draw(glyph).text((cell, cell), str(solution[i]), fill=int(255 * rng.uniform(0.85, 1)),
+                                   font=font, anchor="mm")
+        tilt = cv2.getRotationMatrix2D((cell, cell), rng.uniform(-8, 8), 1)
+        glyph = cv2.warpAffine(np.array(glyph), tilt, (cell * 2, cell * 2), flags=cv2.INTER_CUBIC)
+        r, c = divmod(i, 9)
+        x = int(c * cell + cell / 2 + rng.uniform(-0.06, 0.06) * cell) - cell
+        y = int(r * cell + cell / 2 + rng.uniform(-0.06, 0.06) * cell) - cell
+        # Hücrenin 2 katı büyüklükteki rakam kesitini tahtaya yerleştir (kenarlarda taşanı kırp)
+        x0, y0, x1, y1 = max(x, 0), max(y, 0), min(x + 2 * cell, size), min(y + 2 * cell, size)
+        np.maximum(mask[y0:y1, x0:x1], glyph[y0 - y:y1 - y, x0 - x:x1 - x], out=mask[y0:y1, x0:x1])
+    mask = cv2.GaussianBlur(mask, (0, 0), max(0.5, cell / 70))  # mürekkebin kağıda hafif yayılması
+    # Sadece ızgaranın kapladığı bölgede çalış: tüm fotoğrafta karıştırma gereksiz yere yavaş
+    h, w = frame.shape[:2]
+    bx, by, bw, bh = cv2.boundingRect(corners.astype(np.int32))
+    x0, y0, x1, y1 = max(bx, 0), max(by, 0), min(bx + bw + 1, w), min(by + bh + 1, h)
+    square = np.float32([[0, 0], [size, 0], [size, size], [0, size]])
+    to_roi = cv2.getPerspectiveTransform(square, corners - np.float32([x0, y0]))
+    alpha = cv2.warpPerspective(mask, to_roi, (x1 - x0, y1 - y0))[..., None].astype(np.float32) / 255
+    roi = frame[y0:y1, x0:x1]
+    roi[:] = (roi * (1 - alpha * (1 - INK))).astype(np.uint8)
+
+
 def draw_outline(frame, corners, solved):
     color = (0, 200, 0) if solved else (0, 200, 255)  # yeşil: çözüldü, sarı: ızgara bulundu
     thickness = max(2, frame.shape[1] // 400)
@@ -288,10 +336,11 @@ def solve_image(img, clf, trace=None):
         find_digits(trace["warped"], trace)  # seçilen yönün çizgisiz hali ve rakam kutuları
     solution, board, corrected = correct_and_solve(board, scores)
     unsure = [i for i in unsure_cells(scores) if i not in corrected]
-    draw_outline(out, corners, solution is not None)
     if solution is None:
+        draw_outline(out, corners, solved=False)  # sarı çerçeve: ızgara bulundu ama okunamadı
         return Result(out, "cozulemedi", board, unsure=unsure, corners=corners)
-    draw_solution(out, corners, board, solution)
+    # Çerçeve çizilmez: kağıda kalemle yazılmış görünümü bozmasın
+    draw_handwritten(out, corners, board, solution)
     return Result(out, "cozuldu", board, solution, corrected, unsure, corners)
 
 
