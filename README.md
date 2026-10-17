@@ -333,7 +333,7 @@ frontend/               web arayüzünün kaynak kodu (React + TypeScript + Vite
 static/                 derlenmiş arayüz (npm run build çıktısı)
 fonts/                  el yazısı yazı tipi Caveat ve yazı tiplerinin lisans metinleri (SIL OFL)
 tests/                  otomatik testler
-docs/                   README ekran görüntüleri
+docs/                   README ekran görüntüleri ve GitHub önizleme görseli
 requirements*.txt       bağımlılıklar: yerel, sunucu, model eğitimi
 gunicorn.conf.py        Linux sunucu ayarları (işçi sayısı, zaman aşımı, IP'siz erişim kaydı)
 Dockerfile              Linux sunucu imajı
@@ -363,6 +363,6 @@ vardır:
 | `fonts/Caveat.ttf` (çözümü çizen el yazısı yazı tipi) | The Caveat Project Authors | SIL Open Font License 1.1 (`fonts/OFL.txt`) |
 | Arayüz yazı tipleri Outfit ve Work Sans (`static/assets/`) | The Outfit Project Authors, The Work Sans Project Authors | SIL Open Font License 1.1 (`fonts/OFL-Outfit.txt`, `fonts/OFL-WorkSans.txt`) |
 | `el_yazisi.onnx` (el yazısı rakam ağı) | [MNIST](http://yann.lecun.com/exdb/mnist/) (Yann LeCun, Corinna Cortes, Christopher J.C. Burges) ile eğitildi; veri setinin kendisi projede yok, eğitimde indirilir | MNIST: CC BY-SA 3.0 |
-| `tests/images/kalem.jpg`, `docs/cozum.jpg`, örnek görseller `gazete.jpg` ve `yan.jpg` (`frontend/public/ornekler/`) ve `veri_indir.py`'nin indirdiği fotoğraflar | [wichtounet/sudoku_dataset](https://github.com/wichtounet/sudoku_dataset) (Baptiste Wicht, Jean Hennebert) | [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/); `docs/cozum.jpg` üstüne çözüm çizilerek değiştirildi |
-| Örnek görsel `kalem.jpg` (`frontend/public/ornekler/`) ve ondan alınan `docs/kontrol.jpg` | Basılı bulmacanın boş hücrelerine MNIST test kümesinden (eğitimde kullanılmayan) gerçek el yazısı rakamlar yerleştirilerek bilgisayarda üretildi | MNIST: CC BY-SA 3.0 |
+| `tests/images/kalem.jpg`, `docs/cozum.jpg`, örnek görseller `gazete.jpg` ve `yan.jpg` (`frontend/public/ornekler/`), önizleme görselleri `frontend/public/og.jpg` ve `docs/sosyal-onizleme.jpg` ve `veri_indir.py`'nin indirdiği fotoğraflar | [wichtounet/sudoku_dataset](https://github.com/wichtounet/sudoku_dataset) (Baptiste Wicht, Jean Hennebert) | [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/); `docs/cozum.jpg` ve önizleme görselleri üstüne çözüm çizilerek değiştirildi |
+| Örnek görsel `kalem.jpg` (`frontend/public/ornekler/`) ve onu içeren `docs/kontrol.jpg` ile önizleme görselleri | Basılı bulmacanın boş hücrelerine MNIST test kümesinden (eğitimde kullanılmayan) gerçek el yazısı rakamlar yerleştirilerek bilgisayarda üretildi | MNIST: CC BY-SA 3.0 |
 | `digits_data.npz` (basılı rakam örnekleri) | Windows yazı tiplerinden çizilmiş 28x28 rakam görüntüleri | Yazı tipi dosyalarının kendisi dağıtılmaz |

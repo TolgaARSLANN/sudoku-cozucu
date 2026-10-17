@@ -242,3 +242,14 @@ def test_security_headers(client):
                                  "/el_yazisi.onnx", "/tests/images/kalem.jpg", "/.git/config"])
 def test_only_static_files_are_served(client, url):
     assert client.get(url).status_code == 404  # kod, model, testler ve git dışarıdan okunamaz
+
+
+def test_link_preview_card(client):
+    # Paylaşım önizlemesi: etiketler sayfada, görsel sunucuda ve beyan edilen boyutta
+    html = client.get("/").get_data(as_text=True)
+    assert '<meta property="og:image" content="https://sudoku-cozucu.onrender.com/static/og.jpg">' in html
+    assert '<meta name="twitter:card" content="summary_large_image">' in html
+    res = client.get("/static/og.jpg")
+    assert res.status_code == 200 and res.mimetype == "image/jpeg"
+    img = cv2.imdecode(np.frombuffer(res.data, np.uint8), cv2.IMREAD_COLOR)
+    assert img.shape[:2] == (630, 1200) and len(res.data) < 300 * 1024
