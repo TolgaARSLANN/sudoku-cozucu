@@ -228,4 +228,9 @@ tests/            otomatik testler
 - Çözme modu yalnızca basılı rakamları okur; el yazısı sadece kontrol modunda okunur.
 - El yazısı kontrolü az sayıda gerçek kalem fotoğrafıyla denendi; farklı el yazılarında doğruluk değişebilir.
 - Çok kıvrık sayfalarda ızgara düz bir dörtgen olmadığı için kenardaki hücreler kayabilir.
+- Büyük fotoğraflar işlemeden önce en uzun kenarı 1280 px olacak şekilde küçültülür: tüm ayarlar ve
+  ölçümler bu boyutta yapıldı, daha fazla çözünürlük okumayı iyileştirmiyor (büyütülmüş fotoğraflarla
+  denendi). İndirilen sonuç görseli de bu boyuttadır.
+- Kurallarla düzeltme çok bulanık bir fotoğrafta nadiren yanlış çözüm üretebilir: ölçüm fotoğraflarının
+  3 kat büyütülmüş hallerinde 80 fotoğrafta 1 kez görüldü (orijinal boyutlarda hiç görülmedi).
 - Rakam veri setini yeniden üretmek Windows fontları gerektirir (hazır veri her sistemde çalışır).

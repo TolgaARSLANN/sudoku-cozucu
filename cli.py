@@ -12,7 +12,7 @@ import cv2
 from digits import DigitClassifier
 from ipucu import explain
 from kalite import WARNINGS, check_quality
-from vision import MESSAGES, SolutionCache, load_image, process_frame, save_image, solve_image
+from vision import MESSAGES, SolutionCache, limit_size, load_image, process_frame, save_image, solve_image
 
 
 def format_board(board):
@@ -55,7 +55,7 @@ def solve_files(paths, clf, show_window):
         if img is None:
             print(f"\n{path.name}: görüntü okunamadı.")
             continue
-        result = solve_image(img, clf)
+        result = solve_image(limit_size(img), clf)
         print(f"\n{path.name}: {MESSAGES[result.status]}")
         if result.solution:
             print(f"  Zorluk: {explain(result.board)['zorluk']}")

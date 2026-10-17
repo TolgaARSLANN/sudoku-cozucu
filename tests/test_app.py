@@ -1,3 +1,4 @@
+import base64
 import io
 import json
 from pathlib import Path
@@ -163,3 +164,23 @@ def test_check_without_grid(client):
 
 def test_check_requires_image(client):
     assert client.post("/api/kontrol").status_code == 400
+
+
+def test_large_photo_is_shrunk_consistently(client):
+    # Büyük görseller işlemden önce en uzun kenarı 1280 px olacak şekilde küçültülür
+    def enlarged(name, factor):
+        img = load_image(str(IMAGES / name))
+        return cv2.imencode(".jpg", cv2.resize(img, None, fx=factor, fy=factor, interpolation=cv2.INTER_CUBIC))[1].tobytes()
+
+    data = enlarged("ekran_1.jpg", 10)  # 3600x3600
+    res = post(client, data).get_json()
+    assert res["durum"] == "cozuldu"
+    assert np.float32(res["koseler"]).max() <= 1280  # köşeler küçültülmüş görsele göre
+    shown = cv2.imdecode(np.frombuffer(base64.b64decode(res["gorsel"].split(",")[1]), np.uint8), cv2.IMREAD_COLOR)
+    assert max(shown.shape[:2]) == 1280
+    # Düzeltme sonrası çizim: aynı büyük dosya ve dönen köşelerle tutarlı çalışmalı
+    drawn = client.post("/api/coz-tahta", data={"tahta": json.dumps(res["tahta"]), "koseler": json.dumps(res["koseler"]),
+                                               "gorsel": (io.BytesIO(data), "foto.jpg")},
+                        content_type="multipart/form-data").get_json()
+    assert drawn["durum"] == "cozuldu" and drawn["gorsel"]
+    assert check(client, enlarged("kalem.jpg", 3)).get_json()["durum"] == "kontrol_edildi"  # 3840x2880

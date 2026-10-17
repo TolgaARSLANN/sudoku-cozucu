@@ -17,7 +17,7 @@ from ipucu import explain
 from kalite import WARNINGS, check_quality
 from kontrol import HandwritingReader, check_image
 from solver import solve, solve_unique
-from vision import MESSAGES, draw_handwritten, solve_image
+from vision import MESSAGES, draw_handwritten, limit_size, solve_image
 
 app = Flask(__name__, static_folder="static")
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024
@@ -53,7 +53,8 @@ def read_upload():
     img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
     if img is None:
         return None, (jsonify(hata="Bu dosya görsel olarak okunamadı. JPG ya da PNG deneyin."), 400)
-    return img, None
+    # Düzeltme sonrası çizimde de aynı küçültme: istemcinin geri gönderdiği köşeler bu boyuta göre
+    return limit_size(img), None
 
 
 def encode_image(img):

@@ -22,6 +22,19 @@ def load_image(path):
     return cv2.imdecode(np.fromfile(path, np.uint8), cv2.IMREAD_COLOR)
 
 
+MAX_SIDE = 1280  # tüm ayarlar ve ölçümler bu boyuttaki telefon fotoğraflarıyla yapıldı
+
+
+def limit_size(img):
+    """Büyük fotoğrafı en uzun kenarı MAX_SIDE olacak şekilde küçültür.
+
+    Daha fazla çözünürlük okumayı iyileştirmiyor: 3 kat büyütülmüş ölçüm fotoğraflarında kalem kontrolü
+    bozuldu (yanlış çözüm 0 → 2), basılı okuma da 2 fotoğraf geriledi. Bellek kullanımını da sınırlar.
+    """
+    scale = MAX_SIDE / max(img.shape[:2])
+    return cv2.resize(img, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA) if scale < 1 else img
+
+
 def save_image(path, img):
     cv2.imencode(".jpg", img)[1].tofile(path)  # imwrite da Türkçe karakterli yollara yazamaz
 
