@@ -10,6 +10,7 @@ import cv2
 import numpy as np
 from flask import Flask, jsonify, request, send_from_directory
 from PIL import Image
+from werkzeug.exceptions import HTTPException
 
 from adimlar import build_steps
 from digits import DigitClassifier
@@ -175,6 +176,15 @@ def check_upload():
         ozet=counts,
         gorsel=encode_image(result.image),
     )
+
+
+@app.errorhandler(Exception)
+def unexpected_error(e):
+    """Beklenmeyen hata: kullanıcıya Türkçe mesaj; ayrıntı sadece sunucu kaydına (yol ve hata, görsel değil)."""
+    if isinstance(e, HTTPException):
+        return e  # 400, 404, 413 gibi bilinen durumlar kendi cevaplarıyla
+    app.logger.exception("Beklenmeyen hata: %s %s", request.method, request.path)
+    return jsonify(hata="Beklenmeyen bir hata oluştu. Başka bir görselle tekrar dener misin?"), 500
 
 
 @app.errorhandler(413)

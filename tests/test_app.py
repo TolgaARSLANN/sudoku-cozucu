@@ -184,3 +184,21 @@ def test_large_photo_is_shrunk_consistently(client):
                         content_type="multipart/form-data").get_json()
     assert drawn["durum"] == "cozuldu" and drawn["gorsel"]
     assert check(client, enlarged("kalem.jpg", 3)).get_json()["durum"] == "kontrol_edildi"  # 3840x2880
+
+
+def test_unexpected_error_is_turkish_json_and_logs_no_image(client, monkeypatch, caplog):
+    def broken(*_):
+        raise RuntimeError("deneme hatası")
+    monkeypatch.setattr(server, "solve_image", broken)
+    data = (IMAGES / "ekran_1.jpg").read_bytes()
+    res = post(client, data)
+    assert res.status_code == 500
+    assert res.get_json()["hata"].startswith("Beklenmeyen bir hata oluştu")
+    log = caplog.text
+    assert "deneme hatası" in log and "/api/coz" in log  # ayrıntı sunucu kaydında
+    assert base64.b64encode(data[:30]).decode()[:20] not in log and "JFIF" not in log  # görsel kayda girmez
+
+
+def test_known_http_errors_keep_their_answers(client):
+    assert client.get("/yok").status_code == 404
+    assert client.post("/api/coz").status_code == 400

@@ -206,6 +206,7 @@ Edge yoksa `python -m playwright install chromium` gerekir. Playwright kurulu de
 
 ```
 app.py            web sunucusu (Flask)
+gunicorn.conf.py  Linux sunucu ayarları (işçi sayısı, zaman aşımı, IP'siz erişim kaydı)
 frontend/         web arayüzünün kaynak kodu (React + TypeScript + Vite)
 static/           derlenmiş arayüz (npm run build çıktısı)
 cli.py            komut satırı ve kamera modu

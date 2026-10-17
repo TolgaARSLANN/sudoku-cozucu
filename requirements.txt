@@ -2,6 +2,7 @@ opencv-python>=4.8
 numpy>=1.26
 pillow>=10.0
 flask>=3.0
+gunicorn>=23.0; sys_platform != "win32"  # Linux sunucu (gunicorn.conf.py); Windows'ta python app.py
 
 # geliştirme
 pytest>=8.0
