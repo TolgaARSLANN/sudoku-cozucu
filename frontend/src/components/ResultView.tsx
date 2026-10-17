@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Correction, Hint, Step } from "../api";
 import { Board } from "./Board";
 import { Icon } from "./Icon";
+import { ShareButton } from "./ShareButton";
 import { StepsPanel } from "./StepsPanel";
 
 export interface ResultData {
@@ -59,6 +60,7 @@ export function ResultView({ result, busy, onNewImage, onFix }: ResultViewProps)
           <a id="download" className={solution ? "btn primary" : "btn"} href={result.image} download="sudoku_cozum.jpg">
             <Icon name="download" />Görseli indir
           </a>
+          <ShareButton image={result.image} name="sudoku_cozum.jpg" />
         </div>
       </div>
 

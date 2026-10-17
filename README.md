@@ -19,6 +19,7 @@ El yazısı için küçük bir sinir ağı PyTorch ile eğitilip ONNX olarak pro
 
 - **Web arayüzü:** sürükle-bırak, dosya seçme ya da `Ctrl+V` ile ekran görüntüsü yapıştırma; elinde
   sudoku olmayanlar için tek tıkla örnek görseller (gazete fotoğrafı, yan çekilmiş fotoğraf, kalemle doldurulmuş sayfa)
+- **İndirme ve paylaşma:** sonuç görseli indirilebilir; telefonda "Paylaş" düğmesi paylaşım menüsünü açar
 - **Kurallarla hata düzeltme:** emin olunmadan okunan rakamlar sudoku kurallarına göre düzeltilir
   ve turuncu gösterilir
 - **Düzeltme modu:** okunamayan rakamı tahtada elle düzeltip tekrar çözdürme; emin olunmayan

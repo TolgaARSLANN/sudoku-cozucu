@@ -314,3 +314,29 @@ def test_examples(page, label, status, title):
     page.wait_for_selector("#result")
     assert status in page.inner_text("#status")
     assert page.inner_text("#result-title") == title
+
+
+FAKE_SHARE = """
+    window.__shared = [];
+    navigator.canShare = () => %s;
+    navigator.share = async d => { window.__shared.push(d.files.map(f => [f.name, f.type, f.size])); };
+"""
+
+
+@pytest.mark.parametrize("supported", [True, False])
+def test_share_button(browser, server, supported):
+    # Gerçek paylaşım menüsü testte açılamaz: tarayıcının paylaşım fonksiyonu taklit edilir
+    page = open_page(browser, server, mobile=True)
+    page.add_init_script(FAKE_SHARE % ("true" if supported else "false"))
+    page.reload()
+    page.set_input_files("#file", IMAGES / "ekran_1.jpg")
+    page.wait_for_selector("#result")
+    page.wait_for_timeout(300)  # görsel dosyaya çevrilirken
+    if not supported:
+        assert page.query_selector("#share") is None  # desteklemeyen tarayıcıda düğme hiç yok
+    else:
+        page.click("#share")
+        shared = page.evaluate("window.__shared")
+        assert len(shared) == 1 and shared[0][0][:2] == ["sudoku_cozum.jpg", "image/jpeg"] and shared[0][0][2] > 1000
+        assert page.evaluate("document.documentElement.scrollWidth <= innerWidth"), "yatay kaydırma var"
+    page.context.close()

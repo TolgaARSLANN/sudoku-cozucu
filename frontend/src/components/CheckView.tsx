@@ -1,6 +1,7 @@
 import type { CheckResult, Verdict } from "../api";
 import { Board } from "./Board";
 import { Icon } from "./Icon";
+import { ShareButton } from "./ShareButton";
 import { cellName } from "./ResultView";
 
 interface CheckViewProps {
@@ -47,6 +48,7 @@ export function CheckView({ data, busy, onNewImage }: CheckViewProps) {
           <a id="download" className="btn primary" href={data.gorsel} download="sudoku_kontrol.jpg">
             <Icon name="download" />Görseli indir
           </a>
+          <ShareButton image={data.gorsel} name="sudoku_kontrol.jpg" />
         </div>
       </div>
 
