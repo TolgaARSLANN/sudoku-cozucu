@@ -11,6 +11,10 @@ bilgisayardaki fontlardan üretilen sentetik veriyle eğitilen bir k-NN sınıfl
 El yazısı için küçük bir sinir ağı PyTorch ile eğitilip ONNX olarak projeye konmuştur; OpenCV'nin
 `cv2.dnn` modülüyle çalıştırılır.
 
+![Gazete fotoğrafı çözülmüş: çözüm fotoğrafın üstüne mavi kalemle yazılmış gibi çizilmiş](docs/cozum.jpg)
+
+![Kalemle doldurulmuş sudoku kontrol edilmiş: yanlış iki rakam kırmızı halkayla işaretli](docs/kontrol.jpg)
+
 ## Özellikler
 
 - **Web arayüzü:** sürükle-bırak, dosya seçme ya da `Ctrl+V` ile ekran görüntüsü yapıştırma
@@ -198,6 +202,18 @@ altyapısı (Werkzeug) 500 KB'tan büyük yüklemeleri normalde geçici dosyaya 
 her dosya yazma ve geçici dosya girişimini yakalar, proje klasörünü de işlem öncesi ve sonrası karşılaştırır.
 Sunucu kaydına sadece zaman, adres, sonuç ve süre yazılır; IP adresi ve görsel yazılmaz.
 
+## Lisans ve atıflar
+
+Projenin kodu [MIT lisansı](LICENSE) ile yayınlanmıştır. Projeyle gelen diğer parçaların kendi lisansları vardır:
+
+| Parça | Kaynak | Lisans |
+|---|---|---|
+| `fonts/Caveat.ttf` (çözümü çizen el yazısı yazı tipi) | The Caveat Project Authors | SIL Open Font License 1.1 (`fonts/OFL.txt`) |
+| Arayüz yazı tipleri Outfit ve Work Sans (`static/assets/`) | The Outfit Project Authors, The Work Sans Project Authors | SIL Open Font License 1.1 (`fonts/OFL-Outfit.txt`, `fonts/OFL-WorkSans.txt`) |
+| `el_yazisi.onnx` (el yazısı rakam ağı) | [MNIST](http://yann.lecun.com/exdb/mnist/) (Yann LeCun, Corinna Cortes, Christopher J.C. Burges) ile eğitildi; veri setinin kendisi projede yok, eğitimde indirilir | MNIST: CC BY-SA 3.0 |
+| `tests/images/kalem.jpg`, `docs/cozum.jpg` ve `veri_indir.py`'nin indirdiği fotoğraflar | [wichtounet/sudoku_dataset](https://github.com/wichtounet/sudoku_dataset) (Baptiste Wicht, Jean Hennebert) | CC-BY-4.0; `docs/cozum.jpg` üstüne çözüm çizilerek değiştirildi |
+| `digits_data.npz` (basılı rakam örnekleri) | Windows yazı tiplerinden çizilmiş 28x28 rakam görüntüleri | Yazı tipi dosyalarının kendisi dağıtılmaz |
+
 ## Testler
 
 ```
@@ -221,7 +237,8 @@ cli.py            komut satırı ve kamera modu
 vision.py         ızgara bulma, rakam okuma, çözümü çizme
 adimlar.py        "Nasıl gördüm?" paneli için açıklamalı ara görseller
 kalite.py         fotoğraf kalite kontrolü (bulanıklık, ızgara boyutu, karanlık, parlama)
-fonts/            el yazısı yazı tipi Caveat (SIL Open Font License, fonts/OFL.txt)
+fonts/            el yazısı yazı tipi Caveat ve yazı tiplerinin lisans metinleri (SIL OFL)
+docs/             README ekran görüntüleri
 digits.py         sentetik veri üretimi ve k-NN rakam tanıma
 kontrol.py        kalemle doldurulmuş sudokuyu kontrol etme
 egit_el_yazisi.py el yazısı ağını eğitir (el_yazisi.onnx, el_yazisi_tur.json)

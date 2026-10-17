@@ -284,3 +284,20 @@ def test_check_mode_on_mobile(browser, server):
     page.wait_for_selector("#result")
     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth"), "yatay kaydırma var"
     page.context.close()
+
+
+def test_no_requests_to_other_servers(browser, server):
+    # Gizlilik: yazı tipleri dahil her şey bu sunucudan gelir; ziyaretçinin IP'si üçüncü taraflara gitmez
+    context = browser.new_context()
+    page = context.new_page()
+    urls = []
+    page.on("request", lambda r: urls.append(r.url))
+    page.goto(server)
+    page.set_input_files("#file", IMAGES / "ekran_1.jpg")
+    page.wait_for_selector("#result")
+    page.evaluate("document.fonts.ready")
+    outside = [u for u in urls if not u.startswith(server) and not u.startswith("data:")]
+    assert outside == [], f"Başka sunuculara istek: {outside}"
+    assert page.evaluate("document.fonts.check('600 16px Outfit') && document.fonts.check('400 16px \"Work Sans\"')")
+    assert page.evaluate("[...document.fonts].some(f => f.family.includes('Outfit') && f.status === 'loaded')")
+    context.close()
