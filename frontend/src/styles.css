@@ -141,6 +141,13 @@ kbd { font: 12px/1 ui-monospace, Consolas, monospace; padding: 3px 6px; border: 
 .fixes ul { margin: 6px 0 0; padding-left: 18px; }
 .panel .actions { margin-top: 16px; }
 
+/* ---------- Fotoğraf kalite önerileri ---------- */
+.tips { display: flex; gap: 12px; margin-bottom: 20px; padding: 14px 16px; border-radius: var(--radius-sm);
+        background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--warn); }
+.tips .icon { color: var(--warn); margin-top: 2px; }
+.tips strong { font-weight: 600; }
+.tips ul { margin: 4px 0 0; padding-left: 18px; color: var(--muted); }
+
 /* ---------- "Nasıl gördüm?" paneli ---------- */
 .steps-panel { margin-top: 20px; padding: 0; }
 .steps-panel summary {

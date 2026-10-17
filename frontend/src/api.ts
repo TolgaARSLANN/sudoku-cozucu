@@ -14,6 +14,7 @@ export interface ImageResult {
   cozum: number[] | null;
   duzeltilen: Correction[];
   emin_degil: number[];
+  uyarilar: string[];        // okuma başarısızsa fotoğrafın olası sorunları ve ne yapılacağı
   koseler: number[][] | null; // ızgaranın fotoğraftaki 4 köşesi; düzeltme sonrası çizim için geri gönderilir
   gorsel: string;            // çözüm çizilmiş görsel (data URL)
   adimlar: Step[];           // "Nasıl gördüm?" paneli

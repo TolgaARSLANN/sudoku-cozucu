@@ -11,6 +11,7 @@ export interface ResultData {
   solution: number[] | null;
   corrected: Correction[];
   unsure: number[];
+  warnings: string[];
   steps: Step[];
 }
 
@@ -50,6 +51,16 @@ export function ResultView({ result, busy, onNewImage, onFix }: ResultViewProps)
           </a>
         </div>
       </div>
+
+      {result.warnings.length > 0 && (
+        <div className="tips" id="tips">
+          <Icon name="alert" />
+          <div>
+            <strong>Fotoğrafı iyileştirmek için</strong>
+            <ul>{result.warnings.map(w => <li key={w}>{w}</li>)}</ul>
+          </div>
+        </div>
+      )}
 
       <div className="result-grid">
         <div className="panel">

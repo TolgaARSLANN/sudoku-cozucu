@@ -13,6 +13,8 @@ fontlardan üretilen sentetik veriyle eğitilen bir k-NN sınıflandırıcıyla 
   ve turuncu gösterilir
 - **Düzeltme modu:** okunamayan rakamı tahtada elle düzeltip tekrar çözdürme; emin olunmayan
   hücreler sarıyla işaretlenir
+- **Fotoğraf kalite önerileri:** okuma başarısız olursa olası sebebi (bulanıklık, küçük ızgara,
+  karanlık, parlama) ve ne yapılacağını söyler
 - **"Nasıl gördüm?" paneli:** fotoğrafın adım adım nasıl işlendiğini gösterir (siyah-beyaz görüntü,
   puanlanan ızgara adayları, düzleştirilmiş tahta, silinen çizgiler, okunan rakamlar ve güven
   durumu); ızgara bulunamazsa sebebini görmeyi sağlar
@@ -136,6 +138,7 @@ static/           derlenmiş arayüz (npm run build çıktısı)
 cli.py            komut satırı ve kamera modu
 vision.py         ızgara bulma, rakam okuma, çözümü çizme
 adimlar.py        "Nasıl gördüm?" paneli için açıklamalı ara görseller
+kalite.py         fotoğraf kalite kontrolü (bulanıklık, ızgara boyutu, karanlık, parlama)
 digits.py         sentetik veri üretimi ve k-NN rakam tanıma
 solver.py         sudoku çözücü
 benchmark.py      gerçek fotoğraflarda doğruluk ölçümü

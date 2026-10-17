@@ -13,6 +13,7 @@ from PIL import Image
 
 from adimlar import build_steps
 from digits import DigitClassifier
+from kalite import WARNINGS, check_quality
 from solver import solve, solve_unique
 from vision import MESSAGES, draw_outline, draw_solution, solve_image
 
@@ -86,6 +87,8 @@ def solve_upload():
     if result.corrected:
         message += (f" {len(result.corrected)} rakamı okurken emin olamadım, sudoku kurallarına göre"
                     " düzelttim (turuncu olanlar).")
+    # Kalite uyarıları sadece başarısızlıkta: eski telefonların çözülen fotoğrafları da "bulanık" ölçülüyor
+    warnings = [] if result.status == "cozuldu" else check_quality(img, result.corners)
     return jsonify(
         durum=result.status,
         mesaj=message,
@@ -93,6 +96,7 @@ def solve_upload():
         cozum=result.solution,
         duzeltilen=[{"hucre": i, "okunan": old} for i, old in result.corrected.items()],
         emin_degil=result.unsure,
+        uyarilar=[WARNINGS[w] for w in warnings],
         koseler=None if result.corners is None else result.corners.tolist(),
         gorsel=encode_image(result.image),
         adimlar=[{"baslik": title, "aciklama": text, "gorsel": encode_image(image)}

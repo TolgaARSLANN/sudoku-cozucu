@@ -47,6 +47,7 @@ export default function App() {
         solution: data.cozum,
         corrected: data.duzeltilen,
         unsure: data.emin_degil,
+        warnings: data.uyarilar,
         steps: data.adimlar,
       });
       setView("result");

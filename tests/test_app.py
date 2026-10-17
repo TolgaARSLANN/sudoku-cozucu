@@ -8,6 +8,7 @@ import pytest
 
 import app as server
 from app import app
+from vision import load_image
 
 IMAGES = Path(__file__).parent / "images"
 
@@ -36,6 +37,7 @@ def test_solves_uploaded_screenshot(client):
     assert len(data["cozum"]) == 81 and all(data["cozum"])
     assert data["gorsel"].startswith("data:image/jpeg;base64,")
     assert data["duzeltilen"] == [] and isinstance(data["emin_degil"], list)
+    assert data["uyarilar"] == []  # çözüldüyse kalite uyarısı yok
 
 
 def test_returns_processing_steps(client):
@@ -49,6 +51,15 @@ def test_steps_without_grid(client):
     data = post(client, png.tobytes(), "bos.png").get_json()
     assert data["durum"] == "izgara_yok"
     assert [s["baslik"] for s in data["adimlar"]] == ["Siyah-beyaz görüntü", "Izgara adayları"]
+
+
+def test_quality_warnings_when_unreadable(client):
+    # Bulanıklaştırılmış ekran görüntüsü: okunamaz, sebebi söylenmeli
+    img = load_image(str(IMAGES / "ekran_1.jpg"))  # cv2.imread Türkçe karakterli yolu okuyamaz
+    _, jpg = cv2.imencode(".jpg", cv2.GaussianBlur(img, (0, 0), 8))
+    data = post(client, jpg.tobytes()).get_json()
+    assert data["durum"] != "cozuldu"
+    assert any("bulanık" in w for w in data["uyarilar"])
 
 
 def test_rejects_non_image(client):

@@ -99,6 +99,7 @@ def test_solves_uploaded_image(page):
     assert givens > 0 and givens + len(page.query_selector_all("#board .solved")) == 81
     assert f"{givens} rakam okundu" in page.text_content("#stats")
     assert "primary" in page.get_attribute("#download", "class")
+    assert not page.is_visible("#tips")  # çözüldüyse fotoğraf önerisi gösterilmez
 
 
 def test_fix_mode(page, unsolvable_image):
@@ -130,7 +131,7 @@ def test_shows_rule_corrections(page):
     board = [int(c) for c in PUZZLE]
     board[4] = 7
     fake = {"durum": "cozuldu", "mesaj": "Çözüldü.", "tahta": board, "cozum": board,
-            "duzeltilen": [{"hucre": 4, "okunan": 1}], "emin_degil": [], "koseler": None, "adimlar": [],
+            "duzeltilen": [{"hucre": 4, "okunan": 1}], "emin_degil": [], "uyarilar": [], "koseler": None, "adimlar": [],
             "gorsel": "data:image/gif;base64,R0lGODlhAQABAAAAACw="}
     page.route("**/api/coz", lambda route: route.fulfill(content_type="application/json", body=json.dumps(fake)))
     page.set_input_files("#file", IMAGES / "ekran_1.jpg")
@@ -157,6 +158,7 @@ def test_steps_panel_explains_missing_grid(page, tmp_path):
     page.wait_for_selector("#result")
     assert page.get_attribute("#steps", "open") is not None  # ızgara yoksa sebebi görünsün diye açık
     assert len(page.query_selector_all("#steps .step")) == 2
+    assert "Fotoğrafı iyileştirmek için" in page.inner_text("#tips")
 
 
 def test_rejects_non_image(page, tmp_path):

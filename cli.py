@@ -10,6 +10,7 @@ from pathlib import Path
 import cv2
 
 from digits import DigitClassifier
+from kalite import WARNINGS, check_quality
 from vision import MESSAGES, SolutionCache, load_image, process_frame, save_image, solve_image
 
 
@@ -55,6 +56,9 @@ def solve_files(paths, clf, show_window):
             continue
         result = solve_image(img, clf)
         print(f"\n{path.name}: {MESSAGES[result.status]}")
+        if result.status != "cozuldu":
+            for problem in check_quality(img, result.corners):
+                print(f"  İpucu: {WARNINGS[problem]}")
         for i, old in result.corrected.items():
             r, c = divmod(i, 9)
             print(f"  Düzeltildi: {r + 1}. satır {c + 1}. sütun {old} okundu, kurallara göre {result.board[i]}")
