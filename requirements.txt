@@ -1,9 +1,18 @@
-opencv-python>=4.8
-numpy>=1.26
-pillow>=10.0
-flask>=3.0
-gunicorn>=23.0; sys_platform != "win32"  # Linux sunucu (gunicorn.conf.py); Windows'ta python app.py
+# Sürümler sabit: yeni bir kütüphane sürümü uygulamayı sessizce bozmasın (hepsiyle testler geçiyor).
+# Python 3.12+ (3.14 ile geliştirildi, 3.12 ile Linux'ta denendi)
+opencv-python==5.0.0.93
+numpy==2.5.4
+pillow==12.3.0
+flask==3.1.3
+# app.MemoryRequest Werkzeug'un bir iç fonksiyonunu eziyor (yüklemeler diske yazılmasın);
+# sürüm yükseltilirse tests/test_gizlilik.py ile kontrol et
+werkzeug==3.1.9
+jinja2==3.1.6
+markupsafe==3.0.4
+itsdangerous==2.2.0
+click==8.5.0
+blinker==1.9.0
 
 # geliştirme
-pytest>=8.0
-playwright>=1.40  # tarayıcı testleri; Edge yoksa: python -m playwright install chromium
+pytest==9.1.1
+playwright==1.64.0  # tarayıcı testleri; Edge yoksa: python -m playwright install chromium

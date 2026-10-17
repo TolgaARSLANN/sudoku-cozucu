@@ -41,9 +41,15 @@ El yazısı için küçük bir sinir ağı PyTorch ile eğitilip ONNX olarak pro
 
 ## Kurulum
 
+Python 3.12 ya da üstü gerekir.
+
 ```
 pip install -r requirements.txt
 ```
+
+Bağımlılıkların sürümleri sabittir; yeni bir kütüphane sürümü uygulamayı sessizce bozmasın.
+Linux sunucu için `requirements-sunucu.txt` (pencere kütüphanesi gerektirmeyen OpenCV ve gunicorn),
+modeli yeniden eğitmek için `requirements-egitim.txt` kullanılır.
 
 ## Kullanım
 
