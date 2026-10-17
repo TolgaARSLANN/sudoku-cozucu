@@ -94,8 +94,8 @@ Hazır veri `digits_data.npz` dosyasında gelir. Yeniden üretmek için `python 
 
 | | Geliştirmede kullanılan 40 fotoğraf | Hiç görülmemiş 40 fotoğraf |
 |---|---|---|
-| Izgara bulundu | 40 | 38 |
-| Doğru çözüldü | 35 | 36 |
+| Izgara bulundu | 40 | 40 |
+| Doğru çözüldü | 36 | 37 |
 | **Yanlış çözüm gösterildi** | **0** | **0** |
 
 Ayarlar yalnızca ilk sette yapıldı; ikinci set ezber olup olmadığını kontrol etmek için ayrı tutuldu.

@@ -84,6 +84,19 @@ def test_picks_puzzle_over_small_solution_grid(clf):
     assert "".join(map(str, result.board)) == PUZZLE
 
 
+def test_grid_with_broken_border(clf):
+    # Bulanık fotoğraflarda ince çizgiler kesik kesik kalır; dış çerçeve kapalı bir dörtgen olmaz
+    page = np.full((640, 640, 3), 255, np.uint8)
+    page[40:600, 40:600] = grid_image(PUZZLE, r"C:\Windows\Fonts\arial.ttf")
+    for t in (120, 260, 400, 520):  # dört kenarda da birer boşluk
+        page[t:t + 6, 44:56] = 255
+        page[t:t + 6, 584:596] = 255
+        page[44:56, t:t + 6] = 255
+        page[584:596, t:t + 6] = 255
+    result = solve_image(page, clf)
+    assert "".join(map(str, result.board)) == PUZZLE
+
+
 def test_image_without_sudoku(clf):
     blank = np.full((480, 640, 3), 200, np.uint8)
     assert solve_image(blank, clf).status == "izgara_yok"

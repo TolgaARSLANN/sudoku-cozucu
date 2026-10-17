@@ -52,24 +52,33 @@ def find_grid(gray, trace=None):
     blur = cv2.GaussianBlur(gray, (7, 7), 0)
     th = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                                cv2.THRESH_BINARY_INV, 11, 2)
-    contours, _ = cv2.findContours(th, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    # Bulanık fotoğraflarda ince ızgara çizgileri eşiklemede kesik kesik kalır ve ızgara kapalı bir
+    # dörtgen oluşturmaz. Hafifçe kalınlaştırılmış görüntüden de aday üretilir; kopukluklar kapanır.
+    thickened = cv2.dilate(th, np.ones((3, 3), np.uint8))
     candidates = []  # ızgara testini geçenler: (alan, skor, köşeler)
     scored = []      # puanlanan tüm dörtgenler (panelde gösterilir): (köşeler, skor)
-    for c in sorted(contours, key=cv2.contourArea, reverse=True)[:10]:
-        if cv2.contourArea(c) < gray.size * 0.02:
-            break
-        # Dış çerçeve yer yer kopuk olabilir; dış bükey zarf yine de temiz bir dörtgen verir
-        hull = cv2.convexHull(c)
-        if cv2.contourArea(hull) < gray.size * 0.05:
-            continue
-        approx = cv2.approxPolyDP(hull, 0.02 * cv2.arcLength(hull, True), True)
-        if len(approx) != 4:
-            continue
-        quad = order_corners(approx.reshape(4, 2).astype(np.float32))
-        score = grid_score(th, quad)
-        scored.append((quad / scale, score))
-        if score >= 0.4:
-            candidates.append((cv2.contourArea(hull), score, quad))
+    for source in (th, thickened):
+        found_in_th = [q * scale for q, _ in scored]
+        contours, _ = cv2.findContours(source, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+        for c in sorted(contours, key=cv2.contourArea, reverse=True)[:10]:
+            if cv2.contourArea(c) < gray.size * 0.02:
+                break
+            # Dış çerçeve yer yer kopuk olabilir; dış bükey zarf yine de temiz bir dörtgen verir
+            hull = cv2.convexHull(c)
+            if cv2.contourArea(hull) < gray.size * 0.05:
+                continue
+            approx = cv2.approxPolyDP(hull, 0.02 * cv2.arcLength(hull, True), True)
+            if len(approx) != 4:
+                continue
+            quad = order_corners(approx.reshape(4, 2).astype(np.float32))
+            # Kalınlaştırılmış görüntü sadece yeni dörtgen getirsin: aynı ızgaranın 1 px büyük kopyası
+            # "en büyük kazanır" kuralında asıl adayı geçip köşeleri kaydırmasın
+            if source is thickened and any(np.abs(quad - q).max() < 5 for q in found_in_th):
+                continue
+            score = grid_score(th, quad)  # puan hep asıl görüntüde: iki kaynağın adayları karşılaştırılabilsin
+            scored.append((quad / scale, score))
+            if score >= 0.4:
+                candidates.append((cv2.contourArea(hull), score, quad))
     if trace is not None:
         trace["threshold"], trace["quads"] = th, scored
     if not candidates:
