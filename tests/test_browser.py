@@ -114,10 +114,14 @@ def test_fix_mode(page, unsolvable_image):
 
     for i in HOLES:  # eksik ipuçlarını kullanıcı gibi geri yaz
         inputs[i].fill(PUZZLE[i])
+    photo_before = page.get_attribute("#photo", "src")
     page.click("#fix")
     page.wait_for_selector("#board .solved")
     assert page.inner_text("#status") == "Çözüldü."
     assert page.inner_text("#board-title") == "Çözüm"
+    # Çözüm fotoğrafa da çizilmeli; indirilen görsel çözümsüz kalmamalı
+    assert page.get_attribute("#photo", "src") != photo_before
+    assert page.get_attribute("#download", "href") == page.get_attribute("#photo", "src")
 
 
 def test_shows_rule_corrections(page):

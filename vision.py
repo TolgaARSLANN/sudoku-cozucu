@@ -248,6 +248,7 @@ class Result:
     solution: list = None
     corrected: dict = field(default_factory=dict)  # {hücre: ilk okunan rakam}: kurallarla düzeltilenler
     unsure: list = field(default_factory=list)     # okunurken emin olunamayan hücreler
+    corners: np.ndarray = None                     # ızgaranın köşeleri, doğru yöne çevrilmiş
 
 
 def solve_image(img, clf):
@@ -262,9 +263,9 @@ def solve_image(img, clf):
     unsure = [i for i in unsure_cells(scores) if i not in corrected]
     draw_outline(out, corners, solution is not None)
     if solution is None:
-        return Result(out, "cozulemedi", board, unsure=unsure)
+        return Result(out, "cozulemedi", board, unsure=unsure, corners=corners)
     draw_solution(out, corners, board, solution)
-    return Result(out, "cozuldu", board, solution, corrected, unsure)
+    return Result(out, "cozuldu", board, solution, corrected, unsure, corners)
 
 
 def process_frame(frame, clf, cache):

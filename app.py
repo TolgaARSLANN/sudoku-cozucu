@@ -3,6 +3,7 @@
     python app.py      →  http://127.0.0.1:5000
 """
 import base64
+import json
 from io import BytesIO
 
 import cv2
@@ -12,7 +13,7 @@ from PIL import Image
 
 from digits import DigitClassifier
 from solver import solve, solve_unique
-from vision import MESSAGES, solve_image
+from vision import MESSAGES, draw_outline, draw_solution, solve_image
 
 app = Flask(__name__, static_folder="static")
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024
@@ -35,6 +36,39 @@ def too_many_pixels(data):
     return width * height > MAX_PIXELS
 
 
+def read_upload():
+    """İstekteki görseli açar. Döner: (görsel, None) ya da (None, hata cevabı)."""
+    file = request.files.get("gorsel")
+    if file is None:
+        return None, (jsonify(hata="Görsel gönderilmedi."), 400)
+    data = file.read()
+    if too_many_pixels(data):
+        return None, (jsonify(hata=f"Görselin çözünürlüğü çok yüksek (en fazla {MAX_PIXELS // 1_000_000} "
+                                   "megapiksel). Daha küçük bir görsel dene."), 413)
+    img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
+    if img is None:
+        return None, (jsonify(hata="Bu dosya görsel olarak okunamadı. JPG ya da PNG deneyin."), 400)
+    return img, None
+
+
+def encode_image(img):
+    """Görseli tarayıcı için küçültüp JPEG data URL'ine çevirir."""
+    scale = min(1.0, 1600 / max(img.shape[:2]))  # telefon fotoğrafları gereğinden büyük
+    if scale < 1:
+        img = cv2.resize(img, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+    _, buf = cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, 90])
+    return "data:image/jpeg;base64," + base64.b64encode(buf).decode()
+
+
+def parse_corners(text):
+    """İstemcinin geri gönderdiği 4 köşe noktası; geçersizse None."""
+    try:
+        corners = np.float32(json.loads(text))
+    except (TypeError, ValueError):
+        return None
+    return corners if corners.shape == (4, 2) and np.isfinite(corners).all() else None
+
+
 @app.get("/")
 def index():
     return send_from_directory(app.static_folder, "index.html")
@@ -42,23 +76,10 @@ def index():
 
 @app.post("/api/coz")
 def solve_upload():
-    file = request.files.get("gorsel")
-    if file is None:
-        return jsonify(hata="Görsel gönderilmedi."), 400
-    data = file.read()
-    if too_many_pixels(data):
-        return jsonify(hata=f"Görselin çözünürlüğü çok yüksek (en fazla {MAX_PIXELS // 1_000_000} megapiksel). "
-                            "Daha küçük bir görsel dene."), 413
-    img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
-    if img is None:
-        return jsonify(hata="Bu dosya görsel olarak okunamadı. JPG ya da PNG deneyin."), 400
-
+    img, error = read_upload()
+    if error:
+        return error
     result = solve_image(img, clf)
-    out = result.image
-    scale = min(1.0, 1600 / max(out.shape[:2]))  # telefon fotoğraflarını tarayıcı için küçült
-    if scale < 1:
-        out = cv2.resize(out, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
-    _, buf = cv2.imencode(".jpg", out, [cv2.IMWRITE_JPEG_QUALITY, 90])
     message = MESSAGES[result.status]
     if result.corrected:
         message += (f" {len(result.corrected)} rakamı okurken emin olamadım, sudoku kurallarına göre"
@@ -70,25 +91,44 @@ def solve_upload():
         cozum=result.solution,
         duzeltilen=[{"hucre": i, "okunan": old} for i, old in result.corrected.items()],
         emin_degil=result.unsure,
-        gorsel="data:image/jpeg;base64," + base64.b64encode(buf).decode(),
+        koseler=None if result.corners is None else result.corners.tolist(),
+        gorsel=encode_image(result.image),
     )
 
 
 @app.post("/api/coz-tahta")
 def solve_board():
-    """Kullanıcının düzelttiği tahtayı çözer (fotoğrafta okunamayan rakamlar için)."""
-    board = (request.get_json(silent=True) or {}).get("tahta")
+    """Kullanıcının düzelttiği tahtayı çözer (fotoğrafta okunamayan rakamlar için).
+
+    Fotoğraf ve ızgara köşeleri de gönderilirse çözüm fotoğrafın üstüne çizilir.
+    """
+    try:
+        board = json.loads(request.form.get("tahta", ""))
+    except ValueError:
+        board = None
     if not (isinstance(board, list) and len(board) == 81
             and all(isinstance(v, int) and 0 <= v <= 9 for v in board)):
         return jsonify(hata="Geçersiz tahta."), 400
     solution = solve_unique(board)
-    if solution:
-        return jsonify(durum="cozuldu", mesaj="Çözüldü.", cozum=solution)
-    if solve(board):
-        message = "Bu tahtanın birden fazla çözümü var; eksik rakam olabilir."
-    else:
-        message = "Bu tahtada çelişki var ya da çözümü yok. Rakamları kontrol et."
-    return jsonify(durum="cozulemedi", mesaj=message, cozum=None)
+    if not solution:
+        if solve(board):
+            message = "Bu tahtanın birden fazla çözümü var; eksik rakam olabilir."
+        else:
+            message = "Bu tahtada çelişki var ya da çözümü yok. Rakamları kontrol et."
+        return jsonify(durum="cozulemedi", mesaj=message, cozum=None, gorsel=None)
+
+    image = None
+    if "gorsel" in request.files:
+        img, error = read_upload()
+        if error:
+            return error
+        corners = parse_corners(request.form.get("koseler"))
+        if corners is None:
+            return jsonify(hata="Izgaranın köşe bilgisi geçersiz."), 400
+        draw_outline(img, corners, solved=True)
+        draw_solution(img, corners, board, solution)
+        image = encode_image(img)
+    return jsonify(durum="cozuldu", mesaj="Çözüldü.", cozum=solution, gorsel=image)
 
 
 @app.errorhandler(413)

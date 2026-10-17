@@ -1,4 +1,5 @@
 import io
+import json
 from pathlib import Path
 
 import pytest
@@ -45,28 +46,52 @@ PUZZLE = [int(c) for c in
           "530070000600195000098000060800060003400803001700020006060000280000419005000080079"]
 
 
+def post_board(client, board, image=None, corners=None):
+    """Düzeltilmiş tahtayı gönderir; fotoğraf ve köşeler verilirse çözüm fotoğrafa çizilir."""
+    data = {"tahta": json.dumps(board)}
+    if image is not None:
+        data["gorsel"] = (io.BytesIO(image), "foto.jpg")
+        data["koseler"] = json.dumps(corners)
+    return client.post("/api/coz-tahta", data=data, content_type="multipart/form-data")
+
+
 def test_solve_corrected_board(client):
-    data = client.post("/api/coz-tahta", json={"tahta": PUZZLE}).get_json()
+    data = post_board(client, PUZZLE).get_json()
     assert data["durum"] == "cozuldu" and all(data["cozum"])
+    assert data["gorsel"] is None  # fotoğraf gönderilmediyse çizilecek bir şey yok
 
 
 def test_corrected_board_with_missing_digits(client):
     board = PUZZLE.copy()
     for i in (0, 1, 4, 9, 12, 13):
         board[i] = 0
-    data = client.post("/api/coz-tahta", json={"tahta": board}).get_json()
+    data = post_board(client, board).get_json()
     assert data["durum"] == "cozulemedi" and "birden fazla" in data["mesaj"]
 
 
 def test_corrected_board_with_conflict(client):
     board = PUZZLE.copy()
     board[2] = 5
-    data = client.post("/api/coz-tahta", json={"tahta": board}).get_json()
+    data = post_board(client, board).get_json()
     assert data["durum"] == "cozulemedi" and "çelişki" in data["mesaj"]
 
 
 def test_invalid_board(client):
-    assert client.post("/api/coz-tahta", json={"tahta": [1, 2, 3]}).status_code == 400
+    assert post_board(client, [1, 2, 3]).status_code == 400
+
+
+def test_draws_solution_on_photo_after_fix(client):
+    # Aynı tahta ve köşeler geri gönderilince, ilk çözümdeki görselin aynısı çizilmeli
+    photo = (IMAGES / "ekran_1.jpg").read_bytes()
+    first = post(client, photo).get_json()
+    fixed = post_board(client, first["tahta"], photo, first["koseler"]).get_json()
+    assert fixed["durum"] == "cozuldu"
+    assert fixed["gorsel"] == first["gorsel"]
+
+
+def test_rejects_invalid_corners(client):
+    photo = (IMAGES / "ekran_1.jpg").read_bytes()
+    assert post_board(client, PUZZLE, photo, [[1, 2]]).status_code == 400
 
 
 def test_rejects_too_many_pixels(client, monkeypatch):

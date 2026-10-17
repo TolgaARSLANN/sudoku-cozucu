@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ApiError, solveBoard, solveImage } from "./api";
+import { ApiError, solveBoard, solveImage, type Photo } from "./api";
 import { Hero } from "./components/Hero";
 import { DropOverlay, Footer, TopBar } from "./components/Layout";
 import { ResultView, type ResultData } from "./components/ResultView";
@@ -18,6 +18,7 @@ export default function App() {
   const busyRef = useRef(false);  // pencere dinleyicilerinden de güncel değer okunabilsin
   const fileInput = useRef<HTMLInputElement>(null);
   const resultCount = useRef(0);
+  const photo = useRef<Photo | null>(null);  // düzeltme sonrası çözümü çizmek için son fotoğraf
 
   // Aynı anda tek istek: sürerken yeni yükleme ve tekrar tıklama yok sayılır
   const startBusy = (on: boolean) => {
@@ -37,6 +38,7 @@ export default function App() {
     window.scrollTo({ top: 0 });
     try {
       const data = await solveImage(file);
+      photo.current = data.koseler && { file, corners: data.koseler };
       setStatus({ kind: data.durum, text: data.mesaj });
       setResult({
         id: ++resultCount.current,
@@ -60,10 +62,12 @@ export default function App() {
     startBusy(true);
     setStatus({ kind: "bekle", text: "Çözülüyor…" });
     try {
-      const data = await solveBoard(board);
+      const data = await solveBoard(board, photo.current);
       setStatus({ kind: data.durum, text: data.mesaj });
       if (data.cozum) {
-        setResult(r => r && { ...r, board, solution: data.cozum, corrected: [], unsure: [] });
+        setResult(r => r && {
+          ...r, board, solution: data.cozum, corrected: [], unsure: [], image: data.gorsel ?? r.image,
+        });
       }
     } catch (e) {
       setStatus({ kind: "hata", text: errorText(e) });

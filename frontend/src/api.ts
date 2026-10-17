@@ -14,6 +14,7 @@ export interface ImageResult {
   cozum: number[] | null;
   duzeltilen: Correction[];
   emin_degil: number[];
+  koseler: number[][] | null; // ızgaranın fotoğraftaki 4 köşesi; düzeltme sonrası çizim için geri gönderilir
   gorsel: string;            // çözüm çizilmiş görsel (data URL)
 }
 
@@ -21,6 +22,13 @@ export interface BoardResult {
   durum: "cozuldu" | "cozulemedi";
   mesaj: string;
   cozum: number[] | null;
+  gorsel: string | null;     // fotoğraf gönderildiyse çözüm çizilmiş hali
+}
+
+/** Düzeltme sonrası çözümün çizileceği asıl fotoğraf ve ızgaranın köşeleri. */
+export interface Photo {
+  file: File;
+  corners: number[][];
 }
 
 /** Kullanıcıya gösterilecek mesajı taşıyan hata. */
@@ -44,10 +52,12 @@ export function solveImage(file: File): Promise<ImageResult> {
   return request<ImageResult>("/api/coz", { method: "POST", body: form });
 }
 
-export function solveBoard(tahta: number[]): Promise<BoardResult> {
-  return request<BoardResult>("/api/coz-tahta", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ tahta }),
-  });
+export function solveBoard(tahta: number[], photo: Photo | null): Promise<BoardResult> {
+  const form = new FormData();
+  form.append("tahta", JSON.stringify(tahta));
+  if (photo) {
+    form.append("gorsel", photo.file);
+    form.append("koseler", JSON.stringify(photo.corners));
+  }
+  return request<BoardResult>("/api/coz-tahta", { method: "POST", body: form });
 }
