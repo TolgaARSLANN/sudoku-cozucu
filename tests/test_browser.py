@@ -82,6 +82,7 @@ def test_home_page(page):
     assert page.inner_text("h1") == "Fotoğraftaki sudokuyu çöz, çözümü üstüne çizelim"
     assert page.is_visible("#drop")
     assert len(page.query_selector_all("#demo-board .cell")) == 81
+    assert "diske kaydedilmez" in page.inner_text("footer")  # gizlilik notu görünür
 
 
 def test_mobile_layout(browser, server):

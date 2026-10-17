@@ -75,7 +75,7 @@ export function Hero({ onPick, busy, task, onTaskChange }: HeroProps) {
               <span className="hint-touch">Fotoğraf çekebilir ya da galeriden seçebilirsin</span>
             </span>
             <span className="btn primary"><Icon name="image" />Görsel seç</span>
-            <span className="drop-meta" id="drop-meta">JPG, PNG ya da WEBP · en fazla 20 MB</span>
+            <span className="drop-meta" id="drop-meta">JPG, PNG ya da WEBP · en fazla 20 MB · kaydedilmez</span>
           </label>
         </div>
 

@@ -8,7 +8,7 @@ from io import BytesIO
 
 import cv2
 import numpy as np
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, Request, jsonify, request, send_from_directory
 from PIL import Image
 from werkzeug.exceptions import HTTPException
 
@@ -20,7 +20,19 @@ from kontrol import HandwritingReader, check_image
 from solver import solve, solve_unique
 from vision import MESSAGES, draw_handwritten, limit_size, solve_image
 
+class MemoryRequest(Request):
+    """Yüklenen görsel hiçbir zaman diske yazılmaz.
+
+    Werkzeug 500 KB'tan büyük yüklemeleri geçici dosyaya aktarır; telefon fotoğrafları hep daha büyük.
+    Yükleme en fazla 20 MB (MAX_CONTENT_LENGTH) olduğu için bellekte tutmak güvenli.
+    """
+
+    def _get_file_stream(self, *args, **kwargs):
+        return BytesIO()
+
+
 app = Flask(__name__, static_folder="static")
+app.request_class = MemoryRequest
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024
 clf = DigitClassifier()
 reader = HandwritingReader()

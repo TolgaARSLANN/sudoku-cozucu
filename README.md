@@ -190,6 +190,14 @@ python benchmark.py veri/dogal --kontrol
 Kendi fotoğraf setinle de ölçebilirsin: her `foto.jpg` dosyasının yanında doğru cevabı içeren bir
 `foto.dat` olmalı (2 satır başlık ve ardından 9 satır rakam).
 
+## Gizlilik
+
+Yüklenen fotoğraf sadece sonucu hazırlamak için bellekte işlenir; diske yazılmaz, saklanmaz. Flask'ın
+altyapısı (Werkzeug) 500 KB'tan büyük yüklemeleri normalde geçici dosyaya aktarır; bu kapatıldı
+(`app.MemoryRequest`). `tests/test_gizlilik.py` bunu iki yoldan doğrular: Python'un denetim kancasıyla
+her dosya yazma ve geçici dosya girişimini yakalar, proje klasörünü de işlem öncesi ve sonrası karşılaştırır.
+Sunucu kaydına sadece zaman, adres, sonuç ve süre yazılır; IP adresi ve görsel yazılmaz.
+
 ## Testler
 
 ```

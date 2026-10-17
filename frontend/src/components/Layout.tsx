@@ -8,9 +8,10 @@ export function TopBar() {
           <span className="brand-mark"><Icon name="grid" /></span>
           Sudoku Çözücü
         </a>
-        <span className="badge">
+        {/* Telefonda sadece kilit simgesi görünür; açıklama yine de okunabilsin */}
+        <span className="badge" title="Fotoğrafın kaydedilmez">
           <Icon name="lock" />
-          <span className="badge-text">Görseller bu bilgisayarda işlenir</span>
+          <span className="badge-text">Fotoğrafın kaydedilmez</span>
         </span>
       </div>
     </header>
@@ -22,7 +23,8 @@ export function Footer() {
     <footer>
       <div className="wrap">
         <Icon name="lock" />
-        Yüklediğin görseller bu bilgisayarda çalışan sunucuda işlenir, başka bir yere gönderilmez.
+        Yüklediğin fotoğraf sadece sonucu hazırlamak için sunucunun belleğinde işlenir; diske kaydedilmez,
+        saklanmaz ve kimseyle paylaşılmaz.
       </div>
     </footer>
   );
