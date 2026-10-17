@@ -1,0 +1,3 @@
+# Linux imajında çalışan dosyalar: Windows satır sonu (CRLF) Dockerfile satır devamlarını bozar
+Dockerfile text eol=lf
+.dockerignore text eol=lf
