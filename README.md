@@ -17,7 +17,8 @@ El yazısı için küçük bir sinir ağı PyTorch ile eğitilip ONNX olarak pro
 
 ## Özellikler
 
-- **Web arayüzü:** sürükle-bırak, dosya seçme ya da `Ctrl+V` ile ekran görüntüsü yapıştırma
+- **Web arayüzü:** sürükle-bırak, dosya seçme ya da `Ctrl+V` ile ekran görüntüsü yapıştırma; elinde
+  sudoku olmayanlar için tek tıkla örnek görseller (gazete fotoğrafı, yan çekilmiş fotoğraf, kalemle doldurulmuş sayfa)
 - **Kurallarla hata düzeltme:** emin olunmadan okunan rakamlar sudoku kurallarına göre düzeltilir
   ve turuncu gösterilir
 - **Düzeltme modu:** okunamayan rakamı tahtada elle düzeltip tekrar çözdürme; emin olunmayan
@@ -217,7 +218,8 @@ Projenin kodu [MIT lisansı](LICENSE) ile yayınlanmıştır. Projeyle gelen di�
 | `fonts/Caveat.ttf` (çözümü çizen el yazısı yazı tipi) | The Caveat Project Authors | SIL Open Font License 1.1 (`fonts/OFL.txt`) |
 | Arayüz yazı tipleri Outfit ve Work Sans (`static/assets/`) | The Outfit Project Authors, The Work Sans Project Authors | SIL Open Font License 1.1 (`fonts/OFL-Outfit.txt`, `fonts/OFL-WorkSans.txt`) |
 | `el_yazisi.onnx` (el yazısı rakam ağı) | [MNIST](http://yann.lecun.com/exdb/mnist/) (Yann LeCun, Corinna Cortes, Christopher J.C. Burges) ile eğitildi; veri setinin kendisi projede yok, eğitimde indirilir | MNIST: CC BY-SA 3.0 |
-| `tests/images/kalem.jpg`, `docs/cozum.jpg` ve `veri_indir.py`'nin indirdiği fotoğraflar | [wichtounet/sudoku_dataset](https://github.com/wichtounet/sudoku_dataset) (Baptiste Wicht, Jean Hennebert) | CC-BY-4.0; `docs/cozum.jpg` üstüne çözüm çizilerek değiştirildi |
+| `tests/images/kalem.jpg`, `docs/cozum.jpg`, örnek görseller `gazete.jpg` ve `yan.jpg` (`frontend/public/ornekler/`) ve `veri_indir.py`'nin indirdiği fotoğraflar | [wichtounet/sudoku_dataset](https://github.com/wichtounet/sudoku_dataset) (Baptiste Wicht, Jean Hennebert) | CC-BY-4.0; `docs/cozum.jpg` üstüne çözüm çizilerek değiştirildi |
+| Örnek görsel `kalem.jpg` (`frontend/public/ornekler/`) | Basılı bulmacanın boş hücrelerine MNIST test kümesinden (eğitimde kullanılmayan) gerçek el yazısı rakamlar yerleştirilerek bilgisayarda üretildi | MNIST: CC BY-SA 3.0 |
 | `digits_data.npz` (basılı rakam örnekleri) | Windows yazı tiplerinden çizilmiş 28x28 rakam görüntüleri | Yazı tipi dosyalarının kendisi dağıtılmaz |
 
 ## Testler

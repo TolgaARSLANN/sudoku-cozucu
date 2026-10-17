@@ -4,6 +4,15 @@ import { Icon, type IconName } from "./Icon";
 
 export type Task = "coz" | "kontrol";
 
+/** Elinde sudoku fotoğrafı olmayanlar için: frontend/public/ornekler/ */
+export interface Example { file: string; label: string; task: Task }
+const EXAMPLES: Example[] = [
+  { file: "gazete", label: "Gazete fotoğrafı", task: "coz" },
+  { file: "yan", label: "Yan çekilmiş fotoğraf", task: "coz" },
+  { file: "kalem", label: "Kalemle doldurulmuş, 2 yanlışlı", task: "kontrol" },
+];
+export const exampleUrl = (file: string) => `${import.meta.env.BASE_URL}ornekler/${file}.jpg`;
+
 // Örnek: ünlü bir bulmaca ve çözümü; iki rakam "kurallarla düzeltilmiş" olarak gösterilir
 const DEMO = [..."530070000600195000098000060800060003400803001700020006060000280000419005000080079"].map(Number);
 const DEMO_SOLUTION = [..."534678912672195348198342567859761423426853791713924856961537284287419635345286179"].map(Number);
@@ -25,9 +34,10 @@ interface HeroProps {
   busy: boolean;
   task: Task;
   onTaskChange: (task: Task) => void;
+  onExample: (example: Example) => void;
 }
 
-export function Hero({ onPick, busy, task, onTaskChange }: HeroProps) {
+export function Hero({ onPick, busy, task, onTaskChange, onExample }: HeroProps) {
   // Etiket bir buton gibi davranır: Enter ve Boşluk dosya seçiciyi açar
   function handleKey(e: KeyboardEvent<HTMLLabelElement>) {
     if (e.key === "Enter" || e.key === " ") {
@@ -77,6 +87,18 @@ export function Hero({ onPick, busy, task, onTaskChange }: HeroProps) {
             <span className="btn primary"><Icon name="image" />Görsel seç</span>
             <span className="drop-meta" id="drop-meta">JPG, PNG ya da WEBP · en fazla 20 MB · kaydedilmez</span>
           </label>
+
+          <div className="examples" id="examples">
+            <span className="examples-title">Elinde sudoku yok mu? Örnekle dene:</span>
+            <div className="example-list">
+              {EXAMPLES.map(e => (
+                <button type="button" className="example" key={e.file} disabled={busy} onClick={() => onExample(e)}>
+                  <img src={exampleUrl(`${e.file}_kucuk`)} alt="" width={36} height={36} />
+                  {e.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         <figure className="demo" aria-label="Örnek: fotoğraftan okunup çözülmüş bir sudoku">

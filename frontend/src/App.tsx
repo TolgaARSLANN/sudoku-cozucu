@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, checkImage, solveBoard, solveImage, type CheckResult, type Photo } from "./api";
 import { CheckView } from "./components/CheckView";
-import { Hero, type Task } from "./components/Hero";
+import { exampleUrl, Hero, type Example, type Task } from "./components/Hero";
 import { DropOverlay, Footer, TopBar } from "./components/Layout";
 import { ResultView, type ResultData } from "./components/ResultView";
 import { LoadingSkeleton, StatusBanner, type Status } from "./components/StatusBanner";
@@ -103,6 +103,20 @@ export default function App() {
     }
   }, []);
 
+  // Örnek görsel sunucudan alınır ve kullanıcının yüklediği bir dosya gibi işlenir
+  const handleExample = async (example: Example) => {
+    if (busyRef.current) return;
+    changeTask(example.task);
+    try {
+      const res = await fetch(exampleUrl(example.file));
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      handleFile(new File([blob], `${example.file}.jpg`, { type: "image/jpeg" }));
+    } catch {
+      setStatus({ kind: "hata", text: "Örnek görsel yüklenemedi. Sayfayı yenileyip tekrar dener misin?" });
+    }
+  };
+
   const openPicker = () => fileInput.current?.click();
 
   // Ekran görüntüsü Ctrl+V ile yapıştırılabilir
@@ -155,7 +169,7 @@ export default function App() {
       <main id="main" tabIndex={-1}>
         <div className="wrap">
           <StatusBanner status={status} />
-          {view === "hero" && <Hero onPick={openPicker} busy={busy} task={task} onTaskChange={changeTask} />}
+          {view === "hero" && <Hero onPick={openPicker} busy={busy} task={task} onTaskChange={changeTask} onExample={handleExample} />}
           {view === "loading" && <LoadingSkeleton />}
           {view === "result" && result && (
             <ResultView key={result.id} result={result} busy={busy} onNewImage={openPicker} onFix={handleFix} />

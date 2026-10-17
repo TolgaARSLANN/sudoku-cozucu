@@ -301,3 +301,16 @@ def test_no_requests_to_other_servers(browser, server):
     assert page.evaluate("document.fonts.check('600 16px Outfit') && document.fonts.check('400 16px \"Work Sans\"')")
     assert page.evaluate("[...document.fonts].some(f => f.family.includes('Outfit') && f.status === 'loaded')")
     context.close()
+
+
+@pytest.mark.parametrize("label, status, title", [
+    ("Gazete fotoğrafı", "Çözüldü.", "Sonuç"),
+    ("Yan çekilmiş fotoğraf", "Çözüldü.", "Sonuç"),
+    ("Kalemle doldurulmuş", "2 yanlış", "Kontrol sonucu"),  # kontrol modunu kendisi açar
+])
+def test_examples(page, label, status, title):
+    assert page.query_selector("#task-solve").get_attribute("aria-pressed") == "true"
+    page.click(f"#examples button:has-text('{label}')")
+    page.wait_for_selector("#result")
+    assert status in page.inner_text("#status")
+    assert page.inner_text("#result-title") == title

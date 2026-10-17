@@ -218,6 +218,19 @@ kbd { font: 12px/1 ui-monospace, Consolas, monospace; padding: 3px 6px; border: 
 .cell.focus { box-shadow: inset 0 0 0 3px var(--accent); font-weight: 700; animation: pop .3s var(--ease-out); }
 
 .task { margin-bottom: 14px; }
+.examples { margin-top: 18px; }
+.examples-title { display: block; margin-bottom: 8px; color: var(--muted); font-size: 14px; }
+.example-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.example {
+  display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 4px 14px 4px 4px;
+  border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); color: var(--text);
+  font: 500 14px var(--font-body); cursor: pointer; touch-action: manipulation;
+  transition: border-color .15s var(--ease-out), background-color .15s var(--ease-out);
+}
+.example:hover { border-color: var(--accent); background: var(--accent-soft); }
+.example:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.example:disabled { opacity: .5; cursor: not-allowed; }
+.example img { width: 36px; height: 36px; border-radius: 6px; object-fit: cover; }
 
 /* ---------- İpucu modu ---------- */
 .segmented { display: inline-flex; padding: 3px; gap: 2px; border-radius: var(--radius-sm); background: var(--surface-2); }
