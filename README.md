@@ -6,6 +6,9 @@ bulmacayı çözer ve çözümü **fotoğrafın üstüne, kağıda kalemle yazı
 Kalemle doldurulmuş bir sudokuyu da **kontrol eder**: el yazısı rakamları okur ve yanlış
 yazılanları bulur.
 
+**Canlı deneme:** <https://sudoku-cozucu.onrender.com> (ücretsiz sunucu: bir süre kullanılmazsa uyur,
+ilk açılış yaklaşık bir dakika sürer; istekler birkaç saniye sürebilir)
+
 Çalışırken derin öğrenme kütüphanesi gerektirmez: görüntü işleme OpenCV ile, basılı rakam tanıma
 bilgisayardaki fontlardan üretilen sentetik veriyle eğitilen bir k-NN sınıflandırıcıyla yapılır.
 El yazısı için küçük bir sinir ağı PyTorch ile eğitilip ONNX olarak projeye konmuştur; OpenCV'nin
