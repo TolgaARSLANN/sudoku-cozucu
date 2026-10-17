@@ -215,6 +215,14 @@ kbd { font: 12px/1 ui-monospace, Consolas, monospace; padding: 3px 6px; border: 
 }
 .segmented button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
 .segmented button:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+.player { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+.player input[type="range"] { flex: 1; min-width: 0; height: 24px; accent-color: var(--accent); cursor: pointer; }
+.player select {
+  min-height: 36px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface); color: var(--text); font: 500 14px var(--font-body); cursor: pointer;
+}
+.player input:focus-visible, .player select:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .hint-card { margin-top: 14px; padding: 14px 16px; border-radius: var(--radius-sm); background: var(--surface-2); }
 .hint-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px;
              color: var(--muted); font-size: 13px; font-weight: 600; }
@@ -286,6 +294,9 @@ footer .icon { width: 16px; height: 16px; }
   .panel { padding: 14px; }
   .steps-panel { padding: 0; }
   .steps { padding: 4px 14px 14px; }
+  /* Oynatıcı: üstte Önceki | Sonraki, altta tam genişlikte Oynat */
+  .player-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .player-actions #hint-play { grid-column: 1 / -1; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important;

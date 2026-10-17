@@ -169,6 +169,29 @@ def test_hint_mode(page):
     assert page.get_attribute("#photo", "src") == solved_photo
 
 
+def test_solution_player(page):
+    page.set_input_files("#file", IMAGES / "ekran_1.jpg")
+    page.wait_for_selector("#result")
+    page.click("#mode-hints")
+    shown = lambda: len(page.query_selector_all("#board .solved"))  # noqa: E731
+    total = int(page.get_attribute("#hint-slider", "max"))
+
+    page.select_option("#hint-speed", label="Hızlı")
+    page.click("#hint-play")  # oynat: kendiliğinden ilerlemeli
+    page.wait_for_function("document.querySelectorAll('#board .solved').length >= 4")
+    page.click("#hint-play")  # duraklat: durmalı
+    paused_at = shown()
+    page.wait_for_timeout(700)
+    assert shown() == paused_at
+
+    page.fill("#hint-slider", str(total))  # kaydırıcıyla sona atla
+    assert shown() == total and "Baştan oynat" in page.inner_text("#hint-play")
+    page.click("#hint-play")  # sondayken oynat: baştan başlar
+    page.wait_for_function("document.querySelectorAll('#board .solved').length >= 2")
+    page.click("#hint-next")  # elle gezinme oynatmayı durdurur
+    assert "Oynat" in page.inner_text("#hint-play")
+
+
 def test_steps_panel(page):
     page.set_input_files("#file", IMAGES / "ekran_1.jpg")
     page.wait_for_selector("#result")

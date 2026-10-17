@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Correction, Hint, Step } from "../api";
 import { Board } from "./Board";
 import { Icon } from "./Icon";
@@ -181,16 +181,51 @@ function BoardPanel({ result, busy, onFix, mode, onModeChange }: BoardPanelProps
 }
 
 /** Çözümü hamle hamle açar: her ipucunda hangi hücreye hangi rakamın neden geldiği. */
+const SPEEDS = [{ label: "Yavaş", ms: 1400 }, { label: "Normal", ms: 700 }, { label: "Hızlı", ms: 250 }];
+
 function HintMode({ board, hints }: { board: number[]; hints: Hint[] }) {
   const [shown, setShown] = useState(1);  // açılmış ipucu sayısı
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(SPEEDS[1].ms);
   const current = hints[shown - 1];
   const revealed = new Array<number>(81).fill(0);
   hints.slice(0, shown).forEach(h => { revealed[h.hucre] = h.rakam; });
+  const finished = shown === hints.length;
+
+  // Oynatıcı: her adımda bir sonraki ipucunu aç, sona gelince dur
+  useEffect(() => {
+    if (!playing) return;
+    if (finished) {
+      setPlaying(false);
+      return;
+    }
+    const timer = setTimeout(() => setShown(s => s + 1), speed);
+    return () => clearTimeout(timer);
+  }, [playing, finished, shown, speed]);
+
+  // Elle gezinme oynatmayı durdurur: kontrol kullanıcıda kalsın
+  const goTo = (n: number) => {
+    setPlaying(false);
+    setShown(n);
+  };
+  const togglePlay = () => {
+    if (!playing && finished) setShown(1);  // sondayken oynat: baştan başla
+    setPlaying(!playing);
+  };
 
   return (
     <>
       <Board id="board" board={board} solution={revealed} highlight={current.vurgu} focus={current.hucre} />
-      <div className="hint-card" id="hint" aria-live="polite">
+      <div className="player">
+        <label htmlFor="hint-slider" className="visually-hidden">Çözümde ilerleme</label>
+        <input id="hint-slider" type="range" min={1} max={hints.length} value={shown}
+               onChange={e => goTo(Number(e.target.value))} />
+        <select id="hint-speed" aria-label="Oynatma hızı" value={speed} onChange={e => setSpeed(Number(e.target.value))}>
+          {SPEEDS.map(s => <option key={s.ms} value={s.ms}>{s.label}</option>)}
+        </select>
+      </div>
+      {/* Oynatılırken her adım ekran okuyucuda duyurulmasın; duraklayınca duyurulur */}
+      <div className="hint-card" id="hint" aria-live={playing ? "off" : "polite"}>
         <div className="hint-meta">
           <span>İpucu {shown} / {hints.length}</span>
           <span className="chip">{current.teknik}</span>
@@ -209,12 +244,16 @@ function HintMode({ board, hints }: { board: number[]; hints: Hint[] }) {
           </div>
         )}
       </div>
-      <div className="actions">
+      <div className="actions player-actions">
         <button type="button" className="btn" id="hint-prev" disabled={shown === 1}
-                onClick={() => setShown(shown - 1)}>Önceki</button>
-        <button type="button" className="btn primary" id="hint-next" disabled={shown === hints.length}
-                onClick={() => setShown(shown + 1)}>
-          {shown === hints.length ? "Bulmaca tamamlandı" : "Sonraki ipucu"}
+                onClick={() => goTo(shown - 1)}>Önceki</button>
+        <button type="button" className="btn primary" id="hint-next" disabled={finished}
+                onClick={() => goTo(shown + 1)}>
+          {finished ? "Bulmaca tamamlandı" : "Sonraki ipucu"}
+        </button>
+        <button type="button" className="btn" id="hint-play" onClick={togglePlay}>
+          <Icon name={playing ? "pause" : "play"} />
+          {playing ? "Duraklat" : finished ? "Baştan oynat" : "Oynat"}
         </button>
       </div>
     </>

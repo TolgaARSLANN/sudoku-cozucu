@@ -16,6 +16,7 @@ fontlardan üretilen sentetik veriyle eğitilen bir k-NN sınıflandırıcıyla 
 - **İpucu modu ve zorluk derecesi:** çözümü hamle hamle açar; her hamlede hangi tekniğin
   (tek aday, gizli tek, açık çift, kutu-satır kesişimi, gizli çift, açık üçlü, X-Wing) neden işe
   yaradığını anlatır. Bulmacaya, gereken en zor tekniğe göre Kolay / Orta / Zor / Şeytani der.
+  Oynatıcıyla çözüm hamle hamle kendiliğinden ilerler (hız seçimi ve kaydırıcıyla atlama).
 - **Fotoğraf kalite önerileri:** okuma başarısız olursa olası sebebi (bulanıklık, küçük ızgara,
   karanlık, parlama) ve ne yapılacağını söyler
 - **"Nasıl gördüm?" paneli:** fotoğrafın adım adım nasıl işlendiğini gösterir (siyah-beyaz görüntü,
