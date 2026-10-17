@@ -7,7 +7,7 @@ import pytest
 from PIL import Image, ImageDraw, ImageFont
 
 from digits import DigitClassifier
-from kontrol import Cell, HandwritingReader, build_puzzle, check_image, judge, verdict
+from kontrol import Cell, HandwritingReader, build_puzzle, check_image, draw_marks, judge, verdict
 from solver import solve
 from test_pipeline import IMAGES, grid_image
 from vision import HAND_FONT, load_image
@@ -81,6 +81,18 @@ def test_mistake_taken_for_printed_is_still_judged():
     assert judge(cells, SOLUTION) == {i: "yanlis", 0: "basili"}
 
 
+def test_marks_only_flagged_cells():
+    paper = np.full((900, 900, 3), 230, np.uint8)  # hücre 100 px
+    frame = paper.copy()
+    draw_marks(frame, np.float32([[0, 0], [900, 0], [900, 900], [0, 900]]), {40: "yanlis", 0: "kontrol", 1: "dogru"})
+    changed = (frame != paper).any(axis=2)
+    assert changed[400:500, 400:500].any() and changed[0:100, 0:100].any()
+    assert not changed[0:100, 100:200].any()  # doğru hücreye dokunulmaz
+    assert changed.sum() == changed[400:500, 400:500].sum() + changed[0:100, 0:100].sum()  # halka hücrede kalır
+    darkening = (paper[400:500, 400:500].astype(int) - frame[400:500, 400:500]).reshape(-1, 3).sum(axis=0)
+    assert darkening[0] > 5 * darkening[2]  # BGR: mavi ve yeşil azalır, kırmızı kalır
+
+
 def test_unsolvable_returns_none():
     cells = {i: printed(int(c)) for i, c in enumerate(PUZZLE[:30]) if c != "0"}  # 17'den az ipucu
     assert build_puzzle(cells) is None
@@ -113,6 +125,7 @@ def test_check_pen_filled_page(models):
     assert result.status == "kontrol_edildi"
     assert result.solution == SOLUTION
     assert result.verdicts[wrong_cell] == "yanlis"
+    assert result.read[wrong_cell] == written[wrong_cell]
     assert all(result.verdicts[i] == "basili" for i, c in enumerate(PUZZLE) if c != "0")
     # Düzgün bir yazı tipi basılıya benzer; bir kısmı "basılı" sayılabilir ama doğruya "yanlış" denmez
     assert all(result.verdicts[i] in ("dogru", "basili") for i in written if i != wrong_cell)

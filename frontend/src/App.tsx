@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ApiError, solveBoard, solveImage, type Photo } from "./api";
-import { Hero } from "./components/Hero";
+import { ApiError, checkImage, solveBoard, solveImage, type CheckResult, type Photo } from "./api";
+import { CheckView } from "./components/CheckView";
+import { Hero, type Task } from "./components/Hero";
 import { DropOverlay, Footer, TopBar } from "./components/Layout";
 import { ResultView, type ResultData } from "./components/ResultView";
 import { LoadingSkeleton, StatusBanner, type Status } from "./components/StatusBanner";
 
-type View = "hero" | "loading" | "result";
+type View = "hero" | "loading" | "result" | "check";
 
 const errorText = (e: unknown) => (e instanceof ApiError ? e.message : "Beklenmeyen bir hata oluştu, tekrar dener misin?");
 
@@ -13,6 +14,9 @@ export default function App() {
   const [view, setView] = useState<View>("hero");
   const [status, setStatus] = useState<Status | null>(null);
   const [result, setResult] = useState<ResultData | null>(null);
+  const [check, setCheck] = useState<CheckResult | null>(null);
+  const [task, setTask] = useState<Task>("coz");
+  const taskRef = useRef<Task>("coz");  // pencere dinleyicilerinden de güncel değer okunabilsin
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
   const busyRef = useRef(false);  // pencere dinleyicilerinden de güncel değer okunabilsin
@@ -27,6 +31,11 @@ export default function App() {
     setBusy(on);
   };
 
+  const changeTask = (t: Task) => {
+    taskRef.current = t;
+    setTask(t);
+  };
+
   const handleFile = useCallback(async (file: File | null | undefined) => {
     if (busyRef.current) return;
     if (!file || !file.type.startsWith("image/")) {
@@ -34,10 +43,19 @@ export default function App() {
       return;
     }
     startBusy(true);
-    setStatus({ kind: "bekle", text: "Izgara aranıyor, rakamlar okunuyor…" });
+    const checking = taskRef.current === "kontrol";
+    setStatus({ kind: "bekle", text: checking ? "Rakamlar okunuyor, el yazın kontrol ediliyor…"
+                                              : "Izgara aranıyor, rakamlar okunuyor…" });
     setView("loading");
     window.scrollTo({ top: 0 });
     try {
+      if (checking) {
+        const data = await checkImage(file);
+        setStatus({ kind: data.durum, text: data.mesaj });
+        setCheck(data);
+        setView("check");
+        return;
+      }
       const data = await solveImage(file);
       photo.current = data.koseler && { file, corners: data.koseler };
       if (originalUrl.current) URL.revokeObjectURL(originalUrl.current);
@@ -137,11 +155,12 @@ export default function App() {
       <main id="main" tabIndex={-1}>
         <div className="wrap">
           <StatusBanner status={status} />
-          {view === "hero" && <Hero onPick={openPicker} busy={busy} />}
+          {view === "hero" && <Hero onPick={openPicker} busy={busy} task={task} onTaskChange={changeTask} />}
           {view === "loading" && <LoadingSkeleton />}
           {view === "result" && result && (
             <ResultView key={result.id} result={result} busy={busy} onNewImage={openPicker} onFix={handleFix} />
           )}
+          {view === "check" && check && <CheckView data={check} busy={busy} onNewImage={openPicker} />}
         </div>
       </main>
       <Footer />

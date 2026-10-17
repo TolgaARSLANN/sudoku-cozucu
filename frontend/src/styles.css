@@ -86,7 +86,7 @@ kbd { font: 12px/1 ui-monospace, Consolas, monospace; padding: 3px 6px; border: 
                 margin-bottom: 14px; }
 .demo-caption h2 { font-size: 16px; font-weight: 600; }
 
-.features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 64px; }
+.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 20px; margin-top: 64px; }
 .feature { padding: 22px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
 .feature-icon { display: grid; place-items: center; width: 40px; height: 40px; margin-bottom: 14px;
                 border-radius: 10px; background: var(--accent-soft); color: var(--accent); }
@@ -98,7 +98,7 @@ kbd { font: 12px/1 ui-monospace, Consolas, monospace; padding: 3px 6px; border: 
           border-radius: var(--radius-sm); font-weight: 500; }
 #status[hidden] { display: none; }
 #status .icon { margin-top: 2px; }
-#status.cozuldu { background: var(--accent-soft); color: var(--accent); }
+#status.cozuldu, #status.kontrol_edildi { background: var(--accent-soft); color: var(--accent); }
 #status.cozulemedi, #status.izgara_yok { background: var(--warn-soft); color: var(--warn); }
 #status.hata { background: var(--err-soft); color: var(--err); }
 #status.bekle { background: var(--surface); color: var(--muted); border: 1px solid var(--line); }
@@ -135,10 +135,18 @@ kbd { font: 12px/1 ui-monospace, Consolas, monospace; padding: 3px 6px; border: 
 .swatch.solved { color: var(--accent); }
 .swatch.corrected { color: var(--fix); background: var(--fix-soft); text-decoration: underline dotted; }
 .swatch.unsure { background: var(--warn-soft); outline: 2px dashed var(--warn); outline-offset: -4px; }
+.swatch.wrong { color: var(--err); background: var(--err-soft); }
 .note { margin: 14px 0 0; color: var(--muted); font-size: 14px; }
 .fixes { margin: 12px 0 0; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--fix-soft);
          color: var(--fix); font-size: 14px; }
 .fixes ul { margin: 6px 0 0; padding-left: 18px; }
+.mistakes { margin: 12px 0 0; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--err-soft);
+            color: var(--err); font-size: 14px; }
+.mistakes ul { margin: 6px 0 0; padding-left: 18px; }
+.mistakes details { margin-top: 8px; }
+.mistakes summary { cursor: pointer; font-weight: 600; }
+.mistakes summary:focus-visible { outline: 3px solid var(--err); outline-offset: 2px; border-radius: 4px; }
+#unsure-list { background: var(--warn-soft); color: var(--warn); }
 .panel .actions { margin-top: 16px; }
 
 /* ---------- Fotoğraf kalite önerileri ---------- */
@@ -199,6 +207,8 @@ kbd { font: 12px/1 ui-monospace, Consolas, monospace; padding: 3px 6px; border: 
 .cell.corrected { color: var(--fix); background: var(--fix-soft); font-weight: 600;
                   text-decoration: underline dotted 2px; text-underline-offset: 4px; }
 .cell.unsure { background: var(--warn-soft); outline: 2px dashed var(--warn); outline-offset: -4px; }
+.cell.solved.unsure { color: var(--warn); }
+.cell.wrong { color: var(--err); background: var(--err-soft); font-weight: 600; }
 .cell input {
   width: 100%; height: 100%; border: 0; padding: 0; background: transparent; text-align: center;
   color: var(--text); font: inherit; font-weight: 600; caret-color: var(--accent);
@@ -206,6 +216,8 @@ kbd { font: 12px/1 ui-monospace, Consolas, monospace; padding: 3px 6px; border: 
 .cell input:focus { outline: none; background: var(--accent-soft); box-shadow: inset 0 0 0 3px var(--accent); }
 .cell.hl { background: var(--accent-soft); }
 .cell.focus { box-shadow: inset 0 0 0 3px var(--accent); font-weight: 700; animation: pop .3s var(--ease-out); }
+
+.task { margin-bottom: 14px; }
 
 /* ---------- İpucu modu ---------- */
 .segmented { display: inline-flex; padding: 3px; gap: 2px; border-radius: var(--radius-sm); background: var(--surface-2); }

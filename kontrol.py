@@ -187,19 +187,55 @@ def judge(cells, solution):
             for i, c in cells.items()}
 
 
+MARK_COLORS = {"yanlis": (40, 40, 210), "kontrol": (0, 140, 245)}  # BGR: kırmızı, turuncu
+
+
+def draw_marks(frame, corners, verdicts):
+    """Yanlış rakamların etrafına kırmızı, emin olunmayanlara turuncu kalem halkası çizer."""
+    side = np.mean([np.linalg.norm(corners[i] - corners[(i + 1) % 4]) for i in range(4)])
+    cell = int(np.clip(side, 270, 1350)) // 9  # halka ızgaranın fotoğraftaki boyutunda çizilir
+    size = cell * 9
+    # Sadece ızgaranın kapladığı bölgede çalış: tüm fotoğrafta karıştırma gereksiz yere yavaş
+    h, w = frame.shape[:2]
+    bx, by, bw, bh = cv2.boundingRect(corners.astype(np.int32))
+    x0, y0, x1, y1 = max(bx, 0), max(by, 0), min(bx + bw + 1, w), min(by + bh + 1, h)
+    square = np.float32([[0, 0], [size, 0], [size, size], [0, size]])
+    to_roi = cv2.getPerspectiveTransform(square, corners - np.float32([x0, y0]))
+    roi = frame[y0:y1, x0:x1]
+    for kind, color in MARK_COLORS.items():
+        mask = np.zeros((size, size), np.uint8)
+        for i, v in verdicts.items():
+            if v == kind:
+                r, c = divmod(i, 9)
+                center = (int((c + 0.5) * cell), int((r + 0.5) * cell))
+                cv2.ellipse(mask, center, (int(cell * 0.44), int(cell * 0.4)), -8, 20, 375, 255,
+                            max(2, cell // 14), cv2.LINE_AA)  # biraz eğik, ucu üst üste binen halka
+        if mask.any():
+            alpha = cv2.warpPerspective(mask, to_roi, (x1 - x0, y1 - y0))[..., None].astype(np.float32) / 255
+            roi[:] = (roi * (1 - alpha) + np.float32(color) * alpha).astype(np.uint8)
+
+
 @dataclass
 class CheckResult:
+    image: np.ndarray                             # yanlışları işaretlenmiş görüntü
     status: str                                   # "kontrol_edildi" | "izgara_yok" | "cozulemedi"
     solution: list = None
     verdicts: dict = field(default_factory=dict)  # {hücre: "basili"|"dogru"|"yanlis"|"kontrol"}
+    read: dict = field(default_factory=dict)      # {hücre: kağıtta okunan rakam}
     corners: np.ndarray = None
 
 
 def check_image(img, clf, reader):
+    out = img.copy()
     corners, cells = read_cells(img, clf, reader)
     if corners is None:
-        return CheckResult("izgara_yok")
+        return CheckResult(out, "izgara_yok")
     solution = build_puzzle(cells)
     if solution is None:
-        return CheckResult("cozulemedi", corners=corners)
-    return CheckResult("kontrol_edildi", solution, judge(cells, solution), corners)
+        return CheckResult(out, "cozulemedi", corners=corners)
+    verdicts = judge(cells, solution)
+    # Kağıtta ne yazıyor: basılı rakam yazı tipinden; el yazısı doğruysa çözümdeki rakam, değilse ağın okuduğu
+    read = {i: c.printed if v == "basili" else solution[i] if v == "dogru" else int(c.probs.argmax()) + 1
+            for (i, c), v in zip(cells.items(), verdicts.values())}
+    draw_marks(out, corners, verdicts)
+    return CheckResult(out, "kontrol_edildi", solution, verdicts, read, corners)

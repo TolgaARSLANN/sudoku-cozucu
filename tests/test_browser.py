@@ -241,3 +241,45 @@ def test_drag_overlay(page):
     assert page.is_visible("#drop-overlay")
     page.evaluate("window.dispatchEvent(new DragEvent('dragleave'))")
     assert page.is_hidden("#drop-overlay")
+
+
+def test_check_pen_filled_photo(page):
+    page.click("#task-check")
+    assert "Doldurduğun sudokunun" in page.inner_text(".drop-title")
+    page.set_input_files("#file", IMAGES / "kalem.jpg")
+    page.wait_for_selector("#result")
+    assert page.inner_text("#result-title") == "Kontrol sonucu"
+    assert "0 yanlış" in page.inner_text("#status")
+    assert len(page.query_selector_all("#board .cell")) == 81
+    assert len(page.query_selector_all("#board .wrong")) == 0
+    assert "devam" in page.inner_text("#note") or "Tebrikler" in page.inner_text("#note")
+
+
+def test_check_marks_mistake(page, tmp_path):
+    from test_kontrol import SOLUTION, pen_filled_page
+    empty = [i for i, c in enumerate(PUZZLE) if c == "0"]
+    written = {i: SOLUTION[i] for i in empty[:40]}
+    wrong = empty[5]  # 1. satır 9. sütun
+    written[wrong] = SOLUTION[wrong] % 9 + 1
+    path = tmp_path / "hatali.jpg"
+    save_image(str(path), pen_filled_page(written))
+
+    page.click("#task-check")
+    page.set_input_files("#file", path)
+    page.wait_for_selector("#result")
+    assert "1 yanlış" in page.text_content("#stats")
+    marked = page.query_selector_all("#board .wrong")
+    assert len(marked) == 1 and marked[0].inner_text() == str(written[wrong])
+    assert f"1. satır 9. sütun: {written[wrong]} yazılmış" in page.inner_text("#mistakes")
+    assert not page.is_visible("#answers ul")  # doğru cevap hemen söylenmez
+    page.click("#answers summary")
+    assert f"{SOLUTION[wrong]} olmalı" in page.inner_text("#answers")
+
+
+def test_check_mode_on_mobile(browser, server):
+    page = open_page(browser, server, mobile=True)
+    page.click("#task-check")
+    page.set_input_files("#file", IMAGES / "kalem.jpg")
+    page.wait_for_selector("#result")
+    assert page.evaluate("document.documentElement.scrollWidth <= innerWidth"), "yatay kaydırma var"
+    page.context.close()

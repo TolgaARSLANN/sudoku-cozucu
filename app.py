@@ -162,17 +162,17 @@ def check_upload():
     result = check_image(img, clf, reader)
     if result.solution is None:
         return jsonify(durum=result.status, mesaj=CHECK_MESSAGES[result.status], cozum=None, sonuclar=[],
-                       ozet=None, gorsel=encode_image(img))
+                       ozet=None, gorsel=encode_image(result.image))
     counts = {v: sum(1 for x in result.verdicts.values() if x == v) for v in ("dogru", "yanlis", "kontrol")}
     counts["bos"] = 81 - len(result.verdicts)
     return jsonify(
         durum=result.status,
-        mesaj=f"{counts['dogru']} doğru, {counts['yanlis']} yanlış, {counts['kontrol']} kontrol et, "
-              f"{counts['bos']} boş.",
+        mesaj=f"{counts['dogru']} doğru, {counts['yanlis']} yanlış, "
+              + (f"{counts['kontrol']} kontrol et, " if counts["kontrol"] else "") + f"{counts['bos']} boş.",
         cozum=result.solution,
-        sonuclar=[{"hucre": i, "durum": v} for i, v in sorted(result.verdicts.items())],
+        sonuclar=[{"hucre": i, "durum": v, "okunan": result.read[i]} for i, v in sorted(result.verdicts.items())],
         ozet=counts,
-        gorsel=encode_image(img),
+        gorsel=encode_image(result.image),
     )
 
 

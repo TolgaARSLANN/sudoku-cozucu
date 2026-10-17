@@ -84,3 +84,22 @@ export function solveBoard(tahta: number[], photo: Photo | null): Promise<BoardR
   }
   return request<BoardResult>("/api/coz-tahta", { method: "POST", body: form });
 }
+
+/** Kalemle doldurulmuş sudoku kontrolü (/api/kontrol). */
+export type CheckStatus = "kontrol_edildi" | "cozulemedi" | "izgara_yok";
+export type Verdict = "basili" | "dogru" | "yanlis" | "kontrol";
+
+export interface CheckResult {
+  durum: CheckStatus;
+  mesaj: string;
+  cozum: number[] | null;
+  sonuclar: { hucre: number; durum: Verdict; okunan: number }[];  // sadece rakam bulunan hücreler
+  ozet: { dogru: number; yanlis: number; kontrol: number; bos: number } | null;
+  gorsel: string;            // yanlışları işaretlenmiş görsel (data URL)
+}
+
+export function checkImage(file: File): Promise<CheckResult> {
+  const form = new FormData();
+  form.append("gorsel", file);
+  return request<CheckResult>("/api/kontrol", { method: "POST", body: form });
+}

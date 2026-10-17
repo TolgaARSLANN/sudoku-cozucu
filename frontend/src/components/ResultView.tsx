@@ -27,7 +27,7 @@ interface ResultViewProps {
 
 type Mode = "cozum" | "ipucu";
 
-const cellName = (i: number) => `${Math.floor(i / 9) + 1}. satır ${(i % 9) + 1}. sütun`;
+export const cellName = (i: number) => `${Math.floor(i / 9) + 1}. satır ${(i % 9) + 1}. sütun`;
 
 export function ResultView({ result, busy, onNewImage, onFix }: ResultViewProps) {
   const { board, solution, corrected } = result;

@@ -1,5 +1,5 @@
 import { useRef, type CSSProperties, type KeyboardEvent } from "react";
-import type { Correction } from "../api";
+import type { Correction, Verdict } from "../api";
 
 interface BoardProps {
   board: number[];                 // fotoğraftan okunan rakamlar, boş = 0
@@ -11,6 +11,7 @@ interface BoardProps {
   animate?: boolean;               // çözülen rakamlar sırayla belirsin
   highlight?: number[];            // ipucu modunda gerekçeye konu olan hücreler
   focus?: number;                  // ipucu modunda rakamın yerleştiği hücre
+  marks?: Partial<Record<number, Verdict>>;  // kontrol modunda el yazısı rakamların hükmü
   id?: string;
   decorative?: boolean;            // giriş ekranındaki örnek: ekran okuyuculardan gizli
 }
@@ -18,8 +19,8 @@ interface BoardProps {
 const ARROW_STEPS: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -9, ArrowDown: 9 };
 
 export function Board({
-  board, solution, corrected = [], unsure = [], values, onChange, animate = false, highlight = [], focus, id,
-  decorative = false,
+  board, solution, corrected = [], unsure = [], values, onChange, animate = false, highlight = [], focus, marks = {},
+  id, decorative = false,
 }: BoardProps) {
   const inputs = useRef<(HTMLInputElement | null)[]>([]);
   const fixedFrom = new Map(corrected.map(c => [c.hucre, c.okunan]));
@@ -79,8 +80,12 @@ export function Board({
     }
     if (!solution?.[i]) return <div key={i} className={classes.join(" ")} />;  // ipucu modunda henüz açılmamış
     classes.push("solved");
+    const mark = marks[i];
+    if (mark === "yanlis") classes.push("wrong");
+    if (mark === "kontrol") classes.push("unsure");
     return (
-      <div key={i} className={classes.join(" ")} style={{ "--d": order++ } as CSSProperties}>
+      <div key={i} className={classes.join(" ")} style={{ "--d": order++ } as CSSProperties}
+           title={mark === "yanlis" ? "Yanlış" : mark === "kontrol" ? "Emin olamadım, kontrol et" : undefined}>
         {solution[i]}
       </div>
     );

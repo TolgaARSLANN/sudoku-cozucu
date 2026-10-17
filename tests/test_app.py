@@ -150,7 +150,9 @@ def test_checks_pen_filled_photo(client):
     assert summary["dogru"] + summary["kontrol"] + summary["bos"] + \
         sum(r["durum"] == "basili" for r in data["sonuclar"]) == 81
     assert data["mesaj"].startswith(f"{summary['dogru']} doğru, 0 yanlış")
-    assert all(r["durum"] in ("basili", "dogru", "yanlis", "kontrol") for r in data["sonuclar"])
+    assert all(r["durum"] in ("basili", "dogru", "yanlis", "kontrol") and 1 <= r["okunan"] <= 9
+               for r in data["sonuclar"])
+    assert data["gorsel"].startswith("data:image/jpeg;base64,")
 
 
 def test_check_without_grid(client):

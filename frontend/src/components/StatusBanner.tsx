@@ -1,7 +1,7 @@
-import type { SolveStatus } from "../api";
+import type { CheckStatus, SolveStatus } from "../api";
 import { Icon, type IconName } from "./Icon";
 
-export type StatusKind = SolveStatus | "bekle" | "hata";
+export type StatusKind = SolveStatus | CheckStatus | "bekle" | "hata";
 
 export interface Status {
   kind: StatusKind;
@@ -9,7 +9,7 @@ export interface Status {
 }
 
 const ICONS: Record<Exclude<StatusKind, "bekle">, IconName> = {
-  cozuldu: "check", cozulemedi: "alert", izgara_yok: "alert", hata: "x",
+  cozuldu: "check", kontrol_edildi: "check", cozulemedi: "alert", izgara_yok: "alert", hata: "x",
 };
 
 /** Durum bildirimi: renk tek başına anlam taşımasın diye her durumun kendi simgesi var. */

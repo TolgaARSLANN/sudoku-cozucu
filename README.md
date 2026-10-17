@@ -29,8 +29,10 @@ El yazısı için küçük bir sinir ağı PyTorch ile eğitilip ONNX olarak pro
   durumu); ızgara bulunamazsa sebebini görmeyi sağlar
 - **Eğik, yan ya da ters çekilmiş fotoğraflar:** perspektif düzeltme ve otomatik yön bulma
 - **Yanlış cevap vermez:** okunan tahtanın tek çözümü yoksa çözüm göstermek yerine uyarır
-- **Kalemle doldurulmuş sudokuyu kontrol etme** (`kontrol.py`, `/api/kontrol`): el yazısı her
-  rakam için "doğru", "yanlış" ya da "kontrol et" der. Ağ okuduğundan emin değilse "yanlış" demez.
+- **Kalemle doldurulmuş sudokuyu kontrol etme:** giriş ekranında "Kalemle doldurdum, kontrol et"
+  seçilir. El yazısı her rakam için "doğru", "yanlış" ya da "kontrol et" der; yanlışlar fotoğrafın
+  üstünde kırmızı halkayla, tahtada kırmızıyla işaretlenir ve "22 doğru, 2 yanlış, 11 boş" gibi
+  özetlenir. Doğru cevaplar istenirse ayrıca açılır. Ağ okuduğundan emin değilse "yanlış" demez.
 - **Komut satırı ve canlı kamera modu**
 
 ## Kurulum
