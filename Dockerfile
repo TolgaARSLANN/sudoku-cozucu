@@ -1,7 +1,7 @@
-# Hugging Face Spaces (Docker) ve her Linux sunucu için: docker build -t sudoku . && docker run -p 7860:7860 sudoku
+# Render ve her Linux sunucu için: docker build -t sudoku . && docker run -p 7860:7860 sudoku
 FROM python:3.12-slim
 
-# Root olmayan kullanıcı (Hugging Face 1000 numaralı kullanıcıyı önerir)
+# Uygulama root olmayan bir kullanıcıyla çalışır
 RUN useradd --create-home --uid 1000 user
 USER user
 ENV PATH=/home/user/.local/bin:$PATH \

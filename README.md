@@ -84,7 +84,7 @@ python cli.py *.jpg --gosterme  # toplu çözüm, pencere açmadan
 python cli.py --kamera          # canlı kamera (çıkış: q)
 ```
 
-**Docker ile (Linux sunucu, Hugging Face Spaces):**
+**Docker ile (Linux sunucu):**
 
 ```
 docker build -t sudoku-cozucu .
@@ -92,8 +92,12 @@ docker run -p 7860:7860 sudoku-cozucu      # http://127.0.0.1:7860
 ```
 
 İmaja sadece çalışmak için gereken dosyalar girer; uygulama root olmayan bir kullanıcıyla, gunicorn
-ile çalışır (`gunicorn.conf.py`). Hugging Face Space'inin tanıtım kartı `space/README.md` dosyasındadır;
-yüklerken Space'e README olarak gönderilir.
+ile çalışır (`gunicorn.conf.py`; işçi sayısı `WEB_CONCURRENCY` ile, port `PORT` ile ayarlanır).
+
+**Render'da yayın:** `render.yaml` dosyası Render'ın ücretsiz planında Docker web servisini tanımlar
+(Frankfurt, tek işçi; 512 MB bellek sınırıyla en ağır isteklerde ~275 MB ölçüldü). render.com → New →
+Blueprint → bu depo seçilir; GitHub'a her gönderimde yeniden yayınlanır. Ücretsiz planda servis 15 dakika
+istek gelmezse uyur, ilk açılış yaklaşık bir dakika sürer.
 
 ## Nasıl çalışır?
 
@@ -229,7 +233,7 @@ Sunucu kaydına sadece zaman, adres, sonuç ve süre yazılır; IP adresi ve gö
 - Kullanıcının gönderdiği tahta ve ızgara köşeleri doğrulanır; görselin dışındaki köşeler reddedilir.
   Çözücüde adım sınırı vardır: en zor bilinen bulmacalar da 1 saniyenin altında yanıtlanır.
 - Tarayıcı güvenlik başlıkları: sayfa sadece kendi dosyalarını yükler ve çalıştırır (Content-Security-Policy),
-  başka sitelere adres bilgisi gönderilmez, sadece bu site ve Hugging Face sayfayı çerçeve içinde gösterebilir.
+  başka sitelere adres bilgisi gönderilmez, başka siteler sayfayı çerçeve içinde gösteremez.
 - Beklenmeyen hatalarda kullanıcıya iç ayrıntı gösterilmez; sadece `static/` klasörü dışarıya açıktır.
 - Bağımlılıklarda bilinen açık yok (`pip-audit`, `npm audit`; 2026-10-17). Sürümler sabit.
 
@@ -265,8 +269,8 @@ Edge yoksa `python -m playwright install chromium` gerekir. Playwright kurulu de
 ```
 app.py            web sunucusu (Flask)
 gunicorn.conf.py  Linux sunucu ayarları (işçi sayısı, zaman aşımı, IP'siz erişim kaydı)
-Dockerfile        Linux sunucu imajı (Hugging Face Spaces)
-space/            Hugging Face Space tanıtım kartı
+Dockerfile        Linux sunucu imajı
+render.yaml       Render'da yayın ayarları
 frontend/         web arayüzünün kaynak kodu (React + TypeScript + Vite)
 static/           derlenmiş arayüz (npm run build çıktısı)
 cli.py            komut satırı ve kamera modu

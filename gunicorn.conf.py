@@ -1,11 +1,12 @@
-"""Linux sunucuda (Hugging Face Spaces) gunicorn ayarları: gunicorn app:app
+"""Linux sunucuda (Docker, Render) gunicorn ayarları: gunicorn app:app
 
 Windows'ta gunicorn çalışmaz; yerelde python app.py kullanılır.
 """
 import os
 
 bind = f"0.0.0.0:{os.environ.get('PORT', '7860')}"
-workers = 2              # ücretsiz Space'te 2 çekirdek; istekler işlemci yoğun, aynı anda 2 istek işlenir
+# İstekler işlemci yoğun; işçi başına ~200 MB bellek. Render'ın ücretsiz planında (512 MB) 1 işçi.
+workers = int(os.environ.get("WEB_CONCURRENCY", "2"))
 timeout = 60             # normal istek 1 sn sürer; takılan işçi bu süreden sonra yeniden başlatılır
 graceful_timeout = 10
 max_requests = 500       # işçiler arada bir yenilenir: olası bellek sızıntısı birikmesin

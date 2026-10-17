@@ -1,0 +1,13 @@
+# Render Blueprint: Render bu dosyayı okuyup web servisini kendisi kurar (render.com → New → Blueprint).
+services:
+  - type: web
+    name: sudoku-cozucu
+    runtime: docker
+    plan: free                  # 15 dk istek gelmezse uyur, ilk açılış ~1 dk
+    region: frankfurt           # Türkiye'ye en yakın bölge
+    branch: main
+    healthCheckPath: /
+    autoDeployTrigger: commit   # GitHub'a her gönderimde yeniden yayınlanır
+    envVars:
+      - key: WEB_CONCURRENCY    # ücretsiz planda 512 MB bellek: tek işçi
+        value: "1"

@@ -101,11 +101,11 @@ def parse_corners(text):
 
 
 # Sayfa sadece kendi dosyalarını yükler ve çalıştırır (yazı tipleri dahil). data: ve blob: yüklenen ve işlenen
-# görseller için. Çerçeve içinde sadece bu site ve Hugging Face (Space sayfası uygulamayı iframe'de gösterir).
+# görseller için. Başka siteler sayfayı çerçeve (iframe) içinde gösteremez.
 SECURITY_HEADERS = {
     "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; "
                                "img-src 'self' data: blob:; connect-src 'self' data:; object-src 'none'; "
-                               "base-uri 'none'; form-action 'self'; frame-ancestors 'self' https://huggingface.co",
+                               "base-uri 'none'; form-action 'self'; frame-ancestors 'self'",
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "no-referrer",
 }
